@@ -13,6 +13,7 @@ import { AuthenticatorTransportFuture } from '@simplewebauthn/types';
 import { Response } from 'express';
 import { Details } from 'express-useragent';
 
+
 import { WEB_AUTHN_CACHE_KEY, AUTHENTICATION_BACKEND } from './authentication.constants';
 import {
     AuthenticationBackendInterface,
@@ -26,7 +27,6 @@ import {
     RegisterParams,
     RegistrationResponseJSONParams,
 } from './authentication.contracts';
-import { User } from '../authorization/authorization.contracts';
 import { HttpService } from '../http/http.service';
 
 
@@ -169,9 +169,9 @@ export class AuthenticationService {
                 username: params.username,
             })
             .chain((params) => this.verifyRegisterParams(params))
+            .chain((params) => this.verifyPasskey(body, passKeyData, serverAddress, hostname).map(() => params))
             .chain((params) => this.authBackendService.createUser(params.email, params.username))
-            .chain((user) => this.authBackendService.revokeAuthKey(params.authKey, user).map(() => user))
-            .chain((user) => this.verifyPasskey(body, passKeyData, serverAddress, hostname, user)
+            .chain((user) => this.authBackendService.revokeAuthKey(params.authKey, user).map(() => user)
                 .ioError(() => this.authBackendService.deleteUser(user)));
     }
 
@@ -181,12 +181,15 @@ export class AuthenticationService {
         serverAddress: string, hostname: string,
     ) {
         return this.authBackendService.getUserByEmail(passKeyData.email)
-            .chain((user) => this.verifyPasskey(body, passKeyData, serverAddress, hostname, user));
+            .chain((user) => this.verifyPasskey(body, passKeyData, serverAddress, hostname)
+                .map(() => user));
     }
 
     generateURL (oauthId: string, ip: string, details: Details, redirect_uri: string) {
-        const state = Buffer.from(JSON.stringify({ ip,
-            details })).toString('base64');
+        const state = Buffer.from(JSON.stringify({
+            ip,
+            details,
+        })).toString('base64');
 
         const buildURL = (oauthClient: OauthProvider) => {
             const params = new URLSearchParams({
@@ -309,7 +312,7 @@ export class AuthenticationService {
             .map(() => params);
     }
 
-    private verifyPasskey (body: RegistrationResponseJSONParams, passKeyData: PassKeyData, serverAddress: string, hostname: string, user: User) {
+    private verifyPasskey (body: RegistrationResponseJSONParams, passKeyData: PassKeyData, serverAddress: string, hostname: string) {
         const opts = {
             response: body,
             expectedChallenge: passKeyData.challenge,
@@ -334,7 +337,6 @@ export class AuthenticationService {
                 backedUp: response.registrationInfo!.credentialBackedUp,
                 deviceType: response.registrationInfo!.credentialDeviceType,
                 publicKey: this.Uint8ArrayToBase64(response.registrationInfo!.credential.publicKey),
-            })
-                .map(() => user));
+            }));
     }
 }
