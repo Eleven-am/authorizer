@@ -148,7 +148,6 @@ const Base64URLString = z.string();
 const COSEAlgorithmIdentifier = z.number();
 const PublicKeyCredentialType = z.literal('public-key');
 const AuthenticatorAttachment = z.enum(['cross-platform', 'platform']);
-const AuthenticatorTransportFuture1 = z.enum(['ble', 'internal', 'nfc', 'usb']);
 const ResidentKeyRequirement = z.enum(['discouraged', 'preferred', 'required']);
 const UserVerificationRequirement = z.enum(['discouraged', 'preferred', 'required']);
 const AttestationConveyancePreference = z.enum(['direct', 'enterprise', 'indirect', 'none']);
@@ -184,7 +183,7 @@ const AuthenticatorAttestationResponseJSONSchema = z.object({
     clientDataJSON: Base64URLString,
     attestationObject: Base64URLString,
     authenticatorData: Base64URLString.optional(),
-    transports: z.array(AuthenticatorTransportFuture1).optional(),
+    transports: z.array(AuthenticatorTransportFuture2).optional(),
     publicKeyAlgorithm: COSEAlgorithmIdentifier.optional(),
     publicKey: Base64URLString.optional(),
 });
