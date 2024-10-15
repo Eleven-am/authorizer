@@ -162,17 +162,8 @@ export class AuthenticationService {
         body: RegistrationResponseJSONParams,
         serverAddress: string, hostname: string,
     ) {
-        return TaskEither
-            .of({
-                email: params.email,
-                authKey: params.authKey,
-                username: params.username,
-            })
-            .chain((params) => this.verifyRegisterParams(params))
-            .chain((params) => this.verifyPasskey(body, passKeyData, serverAddress, hostname).map(() => params))
-            .chain((params) => this.authBackendService.createUser(params.email, params.username))
-            .chain((user) => this.authBackendService.revokeAuthKey(params.authKey, user).map(() => user)
-                .ioError(() => this.authBackendService.deleteUser(user)));
+        return this.verifyPasskey(body, passKeyData, serverAddress, hostname)
+            .chain(() => this.createUser(params.email, params.username, params.authKey));
     }
 
     createFirstPassKey (
@@ -185,10 +176,11 @@ export class AuthenticationService {
                 .map(() => user));
     }
 
-    generateURL (oauthId: string, ip: string, details: Details, redirect_uri: string) {
+    generateURL (oauthId: string, ip: string, authKey: string, details: Details, redirect_uri: string) {
         const state = Buffer.from(JSON.stringify({
             ip,
             details,
+            authKey,
         })).toString('base64');
 
         const buildURL = (oauthClient: OauthProvider) => {
@@ -210,7 +202,7 @@ export class AuthenticationService {
     }
 
     getOauthData (oauthId: string, code: string, state: string, redirect_uri: string) {
-        const creatUser = (email: string, username: string) => this.authBackendService.doesUserExist(email)
+        const creatUser = (email: string, username: string, authKey: string) => this.authBackendService.doesUserExist(email)
             .matchTask([
                 {
                     predicate: (exists) => exists,
@@ -218,7 +210,7 @@ export class AuthenticationService {
                 },
                 {
                     predicate: () => true,
-                    run: () => this.authBackendService.createUser(email, username),
+                    run: () => this.createUser(email, username, authKey),
                 },
             ]);
 
@@ -226,14 +218,15 @@ export class AuthenticationService {
             .of(Buffer.from(state, 'base64').toString('utf-8'))
             .map(JSON.parse)
             .parseSchema(oauthStateSchema)
-            .map(({ ip, details }) => ({
+            .map(({ ip, details, authKey }) => ({
                 email,
                 username,
                 ip,
                 details,
+                authKey,
             }))
             .toTaskEither()
-            .chain(({ email, username, ip, details }) => creatUser(email, username)
+            .chain(({ email, username, ip, details, authKey }) => creatUser(email, username, authKey)
                 .map((user) => ({
                     user,
                     ip,
@@ -286,6 +279,19 @@ export class AuthenticationService {
                     };
                 }))
             .chain((data) => parsedState(data.email, data.username));
+    }
+
+    private createUser (email: string, username: string, authKey: string) {
+        return TaskEither
+            .of({
+                email,
+                authKey,
+                username,
+            })
+            .chain((params) => this.verifyRegisterParams(params))
+            .chain((params) => this.authBackendService.createUser(params.email, params.username))
+            .chain((user) => this.authBackendService.revokeAuthKey(authKey, user)
+                .ioError(() => this.authBackendService.deleteUser(user)));
     }
 
     private Uint8ArrayToBase64 (arr: Uint8Array): string {
