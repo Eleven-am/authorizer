@@ -317,11 +317,10 @@ export declare class AuthenticationService {
      * Generate the url for the given oauth id, ip, details and redirect uri
      * @param oauthId The id of the oauth provider
      * @param ip The ip of the user
-     * @param authKey The auth key of the user
      * @param details The details of the user
      * @param redirect_uri The redirect uri
      */
-    generateURL(oauthId: string, ip: string, authKey: string, details: Details, redirect_uri: string): TaskEither<{
+    generateURL(oauthId: string, ip: string, details: Details, redirect_uri: string): TaskEither<{
         url: string;
     }>;
 
