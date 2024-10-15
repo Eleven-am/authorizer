@@ -136,7 +136,6 @@ export const profileSchema = z.union([emailSchema, mailSchema]);
 export const oauthStateSchema = z.object({
     ip: z.string(),
     details: detailsSchema,
-    authKey: z.string(),
 });
 
 export const oauthTokenSchema = z.object({
