@@ -1,16 +1,9 @@
 import { createZodDto } from '@anatine/zod-nestjs';
 import { TaskEither } from '@eleven-am/fp';
-import { ModuleMetadata } from '@nestjs/common/interfaces/modules/module-metadata.interface';
 import { Details } from 'express-useragent';
 import { z } from 'zod';
 
 import { AuthKey, User } from '../authorization/authorization.contracts';
-
-export interface AsyncMetadata extends ModuleMetadata {
-    inject?: any[];
-    imports?: any[];
-    useFactory: (...args: any[]) => Promise<AuthenticationBackendInterface> | AuthenticationBackendInterface;
-}
 
 export interface PassKey {
     credentialId: string;
@@ -141,7 +134,6 @@ export const oauthStateSchema = z.object({
 export const oauthTokenSchema = z.object({
     access_token: z.string(),
     expires_in: z.number(),
-    refresh_token: z.string(),
 });
 
 const Base64URLString = z.string();
