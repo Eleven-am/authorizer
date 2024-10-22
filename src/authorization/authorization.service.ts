@@ -51,10 +51,6 @@ export class AuthorizationService implements OnModuleInit {
     checkSocketAction (user: User | null, context: Context) {
         const rules = this.getRules(context);
 
-        if (rules.length === 0) {
-            return TaskEither.of(true);
-        }
-
         return TaskEither
             .fromNullable(user)
             .mapError(() => createUnauthorizedError('User is not authenticated'))
