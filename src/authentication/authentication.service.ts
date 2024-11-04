@@ -29,7 +29,6 @@ import {
 } from './authentication.contracts';
 import { HttpService } from '../http/http.service';
 
-
 export class AuthenticationService {
     constructor (
         private readonly httpService: HttpService,
