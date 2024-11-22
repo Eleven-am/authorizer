@@ -65,7 +65,7 @@ export type AppAbilityType = PureAbility<[Action, AppSubject], PrismaQuery>;
 
 export type RuleBuilder = Pick<AbilityBuilder<AppAbilityType>, 'can' | 'cannot'>;
 
-export type ContextMapper<T> = (data: void, context: Request & Record<string, any> | Context) => T;
+export type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
 
 export interface AsyncMetadata extends ModuleMetadata {
     inject?: any[];
