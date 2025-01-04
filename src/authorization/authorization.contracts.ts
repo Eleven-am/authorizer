@@ -1,10 +1,11 @@
+import { createZodDto } from '@anatine/zod-nestjs';
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import type { ExecutionContext } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber } from 'class-validator';
+import { z } from 'zod';
+
 
 export enum Action {
     Create = 'create',
@@ -50,23 +51,10 @@ export interface Permission<Resource extends AppSubject = AppSubject> {
     field?: KeyOfSubject<Resource>;
 }
 
-export class HttpExceptionSchema {
-    @IsNumber()
-    @ApiProperty({
-        description: 'The status code of the error',
-        example: 400,
-    })
-    statusCode: number;
+const httpExceptionSchema = z.object({
+    statusCode: z.number(),
+    message: z.string(),
+    error: z.string(),
+});
 
-    @ApiProperty({
-        description: 'The message of the error',
-        example: 'Bad Request',
-    })
-    message: string;
-
-    @ApiProperty({
-        description: 'The error message',
-        example: 'The request was malformed',
-    })
-    error: string;
-}
+export class HttpExceptionSchema extends createZodDto(httpExceptionSchema) {}
