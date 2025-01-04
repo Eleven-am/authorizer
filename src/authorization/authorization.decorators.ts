@@ -56,11 +56,11 @@ export const CurrentAbility = createParamDecorator(
             ability = ctx.ability ?? null;
         }
 
-        if (ability) {
-            return ability;
+        if (!ability) {
+            throw new UnauthorizedException('Ability not found');
         }
 
-        throw new UnauthorizedException();
+        return ability;
     },
 );
 

@@ -89,7 +89,7 @@ export class AuthorizationService implements OnModuleInit {
         try {
             const authorizers = this.authorizers;
 
-            authorizers.map((authorizer) => {
+            authorizers.forEach((authorizer) => {
                 authorizer.forUser(user, {
                     can,
                     cannot,

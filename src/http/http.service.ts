@@ -13,12 +13,8 @@ export class HttpService {
         schema: ZodType<DataType>,
         options?: AxiosRequestConfig,
     ): TaskEither<DataType> {
-        return TaskEither
-            .tryCatch(
-                () => this.baseHttpService.axiosRef.get(url, options),
-                'Failed to get data',
-            )
-            .map((response) => Either.of(response.data))
+        return this.apiGet(url, options)
+            .map((response) => Either.of(response))
             .chain((response) => response.parseSchema(schema).toTaskEither());
     }
 
