@@ -45,8 +45,6 @@ export interface SubjectTypes {}
 
 export interface User {}
 
-export interface AuthKey {}
-
 export declare class PassKeyParams {}
 
 export declare class RegistrationResponseJSONParams {}
@@ -211,19 +209,6 @@ export interface AuthenticationBackendInterface {
      * @param user The user to delete
      */
     deleteUser(user: User): TaskEither<User>;
-
-    /**
-     * Get an auth key by its key
-     * @param authKey The key of the auth key
-     */
-    getAuthKey(authKey: string): TaskEither<AuthKey>;
-
-    /**
-     * Revoke the given auth key
-     * @param authKey The key of the auth key
-     * @param user The user to revoke the auth key for
-     */
-    revokeAuthKey(authKey: string, user: User): TaskEither<AuthKey>;
 
     /**
      * Get the passkeys for the given email and hostname

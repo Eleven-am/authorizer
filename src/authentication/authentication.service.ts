@@ -12,6 +12,7 @@ import {
 import { AuthenticatorTransportFuture } from '@simplewebauthn/types';
 import { Response } from 'express';
 import { Details } from 'express-useragent';
+import { HttpService } from '../http/http.service';
 
 
 import { WEB_AUTHN_CACHE_KEY, AUTHENTICATION_BACKEND } from './authentication.constants';
@@ -27,7 +28,6 @@ import {
     RegisterParams,
     RegistrationResponseJSONParams,
 } from './authentication.contracts';
-import { HttpService } from '../http/http.service';
 
 export class AuthenticationService {
     constructor (
@@ -164,14 +164,11 @@ export class AuthenticationService {
         return TaskEither
             .of({
                 email: params.email,
-                authKey: params.authKey,
                 username: params.username,
             })
             .chain((params) => this.verifyRegisterParams(params))
             .chain((params) => this.verifyPasskey(body, passKeyData, serverAddress, hostname).map(() => params))
             .chain((params) => this.authBackendService.createUser(params.email, params.username))
-            .chain((user) => this.authBackendService.revokeAuthKey(params.authKey, user).map(() => user)
-                .ioError(() => this.authBackendService.deleteUser(user)));
     }
 
     createFirstPassKey (
@@ -307,8 +304,6 @@ export class AuthenticationService {
                 () => params,
                 () => createForbiddenError('Username already exists'),
             )
-            .chain((params) => this.authBackendService.getAuthKey(params.authKey))
-            .map(() => params);
     }
 
     private verifyPasskey (body: RegistrationResponseJSONParams, passKeyData: PassKeyData, serverAddress: string, hostname: string) {

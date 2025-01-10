@@ -3,7 +3,7 @@ import { TaskEither } from '@eleven-am/fp';
 import { Details } from 'express-useragent';
 import { z } from 'zod';
 
-import { AuthKey, User } from '../authorization/authorization.contracts';
+import { User } from '../authorization/authorization.contracts';
 
 export interface PassKey {
     credentialId: string;
@@ -33,7 +33,6 @@ export interface OauthProvider {
 export interface RegisterParams {
     email: string;
     username: string;
-    authKey: string;
 }
 
 export interface AuthenticationBackendInterface {
@@ -45,9 +44,6 @@ export interface AuthenticationBackendInterface {
     updateUser(user: User): TaskEither<User>;
     deleteUser(user: User): TaskEither<User>;
     doesUserExist(email: string): TaskEither<boolean>;
-
-    getAuthKey(authKey: string): TaskEither<AuthKey>;
-    revokeAuthKey(authKey: string, user: User): TaskEither<AuthKey>;
 
     getPassKeys(email: string, hostname: string): TaskEither<PassKey[]>;
     getPassKey(email: string, hostname: string, credentialId: string): TaskEither<PassKey>;
@@ -110,8 +106,6 @@ const detailsSchema = z.object({
 const passKeySchema = z.object({
     username: z.string(),
     email: z.string().email(),
-    authKey: z.string()
-        .regex(/^([a-zA-Z0-9]{4}-){4}[a-zA-Z0-9]{4}$/, 'Invalid auth key'),
 });
 
 const emailSchema = z.object({

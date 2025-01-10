@@ -19,8 +19,6 @@ export enum Action {
 export interface SubjectTypes {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface User {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface AuthKey {}
 
 export type AppSubject = Subjects<SubjectTypes>;
 
