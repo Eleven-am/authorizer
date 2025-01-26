@@ -12,7 +12,6 @@ import {
 import { AuthenticatorTransportFuture } from '@simplewebauthn/types';
 import { Response } from 'express';
 import { Details } from 'express-useragent';
-import { HttpService } from '../http/http.service';
 
 
 import { WEB_AUTHN_CACHE_KEY, AUTHENTICATION_BACKEND } from './authentication.constants';
@@ -28,6 +27,7 @@ import {
     RegisterParams,
     RegistrationResponseJSONParams,
 } from './authentication.contracts';
+import { HttpService } from '../http/http.service';
 
 export class AuthenticationService {
     constructor (
@@ -168,7 +168,7 @@ export class AuthenticationService {
             })
             .chain((params) => this.verifyRegisterParams(params))
             .chain((params) => this.verifyPasskey(body, passKeyData, serverAddress, hostname).map(() => params))
-            .chain((params) => this.authBackendService.createUser(params.email, params.username))
+            .chain((params) => this.authBackendService.createUser(params.email, params.username));
     }
 
     createFirstPassKey (
@@ -303,7 +303,7 @@ export class AuthenticationService {
             .flip(
                 () => params,
                 () => createForbiddenError('Username already exists'),
-            )
+            );
     }
 
     private verifyPasskey (body: RegistrationResponseJSONParams, passKeyData: PassKeyData, serverAddress: string, hostname: string) {

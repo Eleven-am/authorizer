@@ -41,8 +41,10 @@ export declare enum Action {
     Manage = 'manage'
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SubjectTypes {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface User {}
 
 export declare class PassKeyParams {}
@@ -127,11 +129,13 @@ export function createParamDecorator<T>(model: string, mapper: ContextMapper<T>)
  * Decorator to check if the user can perform the given permissions
  * @param permissions The permissions to check
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export declare function CanPerform<Resource extends AppSubject>(...permissions: Permission<Resource>[]): <TFunction extends Function, Y>(target: TFunction | object, propertyKey?: string | symbol, descriptor?: TypedPropertyDescriptor<Y>) => void;
 
 /**
  * Decorator to describe a class as an authorizer for the application
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export declare function Authorizer(): <TFunction extends Function, Y>(target: TFunction | object, propertyKey?: string | symbol, descriptor?: TypedPropertyDescriptor<Y>) => void;
 
 /**
