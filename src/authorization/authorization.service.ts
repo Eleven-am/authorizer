@@ -3,7 +3,7 @@ import { createPrismaAbility } from '@casl/prisma';
 import { TaskEither, createUnauthorizedError } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY } from './authorization.constants';
@@ -14,6 +14,7 @@ export class AuthorizationService implements OnModuleInit {
     private authorizers: WillAuthorize[] = [];
 
     constructor (
+        @Inject(Reflector)
         private readonly reflector: Reflector,
         private readonly discoverService: DiscoveryService,
     ) {}
