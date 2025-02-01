@@ -3,11 +3,11 @@ import { createPrismaAbility } from '@casl/prisma';
 import { TaskEither, createUnauthorizedError } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException } from '@nestjs/common';
 
 import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY } from './authorization.constants';
 import { WillAuthorize, User, Permission, AppAbilityType } from './authorization.contracts';
+import { AuthorizationReflector } from './authorization.reflector';
 
 @Injectable()
 export class AuthorizationService implements OnModuleInit {
@@ -15,7 +15,7 @@ export class AuthorizationService implements OnModuleInit {
 
     constructor (
         private readonly discoverService: DiscoveryService,
-        @Inject(Reflector) private readonly reflector: Reflector,
+        private readonly reflector: AuthorizationReflector,
     ) {}
 
     async onModuleInit () {
@@ -68,16 +68,12 @@ export class AuthorizationService implements OnModuleInit {
     }
 
     private getRules (context: ExecutionContext | Context) {
-        const acceptableRulesMethods =
-            this.reflector.get<Permission[]>(CAN_PERFORM_KEY, context.getHandler()) ??
-            [];
-        const acceptableRulesClass =
-            this.reflector.get<Permission[]>(CAN_PERFORM_KEY, context.getClass()) ??
-            [];
-
-        return ([] as Permission[]).concat(
-            acceptableRulesMethods,
-            acceptableRulesClass,
+        return this.reflector.getAllAndMerge<Permission[]>(
+            CAN_PERFORM_KEY,
+            [
+                context.getHandler(),
+                context.getClass(),
+            ],
         );
     }
 
