@@ -14,9 +14,8 @@ export class AuthorizationService implements OnModuleInit {
     private authorizers: WillAuthorize[] = [];
 
     constructor (
-        @Inject(Reflector)
-        private readonly reflector: Reflector,
         private readonly discoverService: DiscoveryService,
+        @Inject(Reflector) private readonly reflector: Reflector,
     ) {}
 
     async onModuleInit () {
