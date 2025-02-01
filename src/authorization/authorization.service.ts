@@ -14,7 +14,7 @@ export class AuthorizationService implements OnModuleInit {
     private authorizers: WillAuthorize[] = [];
 
     constructor (
-        protected readonly reflector: Reflector,
+        private readonly reflector: Reflector,
         private readonly discoverService: DiscoveryService,
     ) {}
 
