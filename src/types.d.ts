@@ -2,36 +2,9 @@ import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
-import { ExecutionContext, DynamicModule, ModuleMetadata } from '@nestjs/common';
+import { ExecutionContext } from '@nestjs/common';
 import { AxiosRequestConfig } from 'axios';
-import { Response } from 'express';
-import { Details } from 'express-useragent';
 import { ZodType } from 'zod';
-
-export interface PassKey {
-    credentialId: string;
-    publicKey: string;
-    transports: string[];
-    counter: number;
-    backedUp: boolean;
-    deviceType: 'singleDevice' | 'multiDevice';
-}
-
-export interface PassKeyData {
-    challenge: string;
-    details: Details;
-    email: string;
-    ip: string;
-}
-
-export interface OauthProvider {
-    scopes: string[];
-    clientId: string;
-    clientSecret: string;
-    tokenUrl: string;
-    authorizeUrl: string;
-    userDataUrl: string;
-}
 
 export declare enum Action {
     Create = 'create',
@@ -47,16 +20,6 @@ export interface SubjectTypes {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface User {}
 
-export declare class PassKeyParams {}
-
-export declare class RegistrationResponseJSONParams {}
-
-export declare class AuthenticationResponseJSONParams {}
-
-export declare class PublicKeyCredentialCreationOptionsJSONParams {}
-
-export declare class PublicKeyCredentialRequestOptionsJSONParams {}
-
 type AppSubject = Subjects<SubjectTypes>;
 
 type KeyOfSubject<subject extends AppSubject> = subject extends keyof SubjectTypes ? keyof SubjectTypes[subject] : subject;
@@ -66,11 +29,6 @@ export type AppAbilityType = PureAbility<[Action, AppSubject], PrismaQuery>;
 export type RuleBuilder = Pick<AbilityBuilder<AppAbilityType>, 'can' | 'cannot'>;
 
 export type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
-
-export interface AsyncMetadata extends ModuleMetadata {
-    inject?: any[];
-    useFactory: (...args: any[]) => Promise<AuthenticationBackendInterface> | AuthenticationBackendInterface;
-}
 
 export interface WillAuthorize {
 
@@ -143,189 +101,6 @@ export declare function Authorizer(): <TFunction extends Function, Y>(target: TF
  * @param actions The actions to sort
  */
 export declare function sortActions(actions: Action[]): Action[];
-
-/**
- * A decorator to get the user agent from the request
- */
-export declare function UserAgent(): ParameterDecorator;
-
-/**
- * A decorator to get the server address from the request
- */
-export declare function ServerAddress(): ParameterDecorator;
-
-/**
- * A decorator to get the host address from the request
- */
-export declare function HostAddress(): ParameterDecorator;
-
-/**
- * A decorator to get the passkey session from the request
- */
-export declare function PassKeySession(): ParameterDecorator;
-
-export interface AuthenticationBackendInterface {
-
-    /**
-     * Get the name of the rp for the webauthn
-     */
-    rpName(): string;
-
-    /**
-     * Create a new user with the given email and username
-     * @param email The email of the user
-     * @param username The username of the user
-     */
-    createUser(email: string, username: string): TaskEither<User>;
-
-    /**
-     * Get a user by their username
-     * @param username The username of the user
-     */
-    getUserByUsername(username: string): TaskEither<User>;
-
-    /**
-     * Get a user by their email
-     * @param email The email of the user
-     */
-    getUserByEmail(email: string): TaskEither<User>;
-
-    /**
-     * Get a user by their id
-     * @param userId The id of the user
-     */
-    getUserById(userId: string): TaskEither<User>;
-
-    /**
-     * Check if the user exists with the given email
-     * @param email The email of the user
-     */
-    doesUserExist(email: string): TaskEither<boolean>;
-
-    /**
-     * Update the given user
-     * @param user The user to update
-     */
-    updateUser(user: User): TaskEither<User>;
-
-    /**
-     * Delete the given user
-     * @param user The user to delete
-     */
-    deleteUser(user: User): TaskEither<User>;
-
-    /**
-     * Get the passkeys for the given email and hostname
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     */
-    getPassKeys(email: string, hostname: string): TaskEither<PassKey[]>;
-
-    /**
-     * Get the passkey for the given email, hostname and credential id
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     * @param credentialId The id of the credential
-     */
-    getPassKey(email: string, hostname: string, credentialId: string): TaskEither<PassKey>;
-
-    /**
-     * Create a new passkey for the given email, hostname and passkey
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     * @param passKey The passkey to create
-     */
-    createPassKey(email: string, hostname: string, passKey: PassKey): TaskEither<unknown>;
-
-    /**
-     * Update the passkey for the given email, hostname and counter
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     * @param credentialId The id of the credential
-     * @param counter The counter of the passkey
-     */
-    updatePassKey(email: string, hostname: string, credentialId: string, counter: number): TaskEither<PassKey>;
-
-    /**
-     * Get the oauth provider by its id
-     * @param oauthId The id of the oauth provider
-     */
-    getOauthProvider(oauthId: string): TaskEither<OauthProvider>;
-}
-
-export declare class AuthenticationModule {
-    static forRoot (moduleOptions: AsyncMetadata): DynamicModule;
-}
-
-export declare class AuthenticationService {
-    /**
-     * Login with webauthn
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     * @param response The response from the device
-     */
-    loginWebAuthn(email: string, hostname: string, response: Response): TaskEither<PublicKeyCredentialRequestOptionsJSONParams>;
-
-    /**
-     * Register with webauthn
-     * @param email The email of the user
-     * @param hostname The hostname of the device
-     * @param response The response from the device
-     */
-    registerWebAuthn(email: string, hostname: string, response: Response): TaskEither<PublicKeyCredentialCreationOptionsJSONParams>;
-
-    /**
-     * Create the first passkey
-     * @param passKeyData The passkey data
-     * @param body The response from the device
-     * @param serverAddress The address of the server
-     * @param hostname The hostname of the device
-     */
-    createFirstPassKey(passKeyData: PassKeyData, body: RegistrationResponseJSONParams, serverAddress: string, hostname: string): TaskEither<User>;
-
-    /**
-     * Confirm the login with webauthn
-     * @param passKeyData The passkey data
-     * @param body The response from the device
-     * @param serverAddress The address of the server
-     * @param hostname The hostname of the device
-     */
-    loginWebAuthnConfirm(passKeyData: PassKeyData, body: AuthenticationResponseJSONParams, serverAddress: string, hostname: string): TaskEither<User>;
-
-    /**
-     * Confirm the registration with webauthn
-     * @param params The passkey params
-     * @param passKeyData The passkey data
-     * @param body The response from the device
-     * @param serverAddress The address of the server
-     * @param hostname The hostname of the device
-     */
-    registerWebAuthnConfirm(params: PassKeyParams, passKeyData: PassKeyData, body: RegistrationResponseJSONParams, serverAddress: string, hostname: string): TaskEither<User>;
-
-    /**
-     * Generate the url for the given oauth id, ip, details and redirect uri
-     * @param oauthId The id of the oauth provider
-     * @param ip The ip of the user
-     * @param details The details of the user
-     * @param redirect_uri The redirect uri
-     */
-    generateURL(oauthId: string, ip: string, details: Details, redirect_uri: string): TaskEither<{
-        url: string;
-    }>;
-
-    /**
-     * Get the oauth data for the given oauth id, code, state and redirect uri
-     * @param oauthId The id of the oauth provider
-     * @param code The code of the oauth provider
-     * @param state The state of the oauth provider
-     * @param redirect_uri The redirect uri
-     */
-    getOauthData(oauthId: string, code: string, state: string, redirect_uri: string): TaskEither<{
-        user: User;
-        ip: string;
-        details: Details;
-    }>;
-}
 
 export declare class HttpModule {}
 
