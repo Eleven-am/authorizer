@@ -42,17 +42,34 @@ The `AuthorizationModule` **must** be imported in your root `AppModule`. This is
 
 ```typescript
 import { AuthorizationModule } from '@eleven-am/authorizer';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthHttpGuard, AuthSocketGuard } from './auth.guard';
+import { UserModule } from './user.module';
+import { PostModule } from './post.module';
+import { PondSocketModule } from '@eleven-am/pondsocket-nest';
 import { Module } from '@nestjs/common';
 
 @Module({
   imports: [
     // Import AuthorizationModule at the root level to provide AuthorizationService globally
     AuthorizationModule,
+          
+    // Import PondSocketModule with AuthSocketGuard
+    PondSocketModule.forRoot({
+       guards: [AuthSocketGuard]
+    }),
     
     // Your feature modules can then use AuthorizationService
     UserModule,
     PostModule,
   ],
+  providers: [
+     {
+        provide: APP_GUARD,
+        // Use AuthHttpGuard for all HTTP routes
+        useClass: AuthHttpGuard
+     }
+  ]
 })
 export class AppModule {}
 
@@ -158,7 +175,6 @@ Once `AuthorizationModule` is imported in the root module, your feature modules 
   providers: [
     PostService,
     PostAuthorizer,    // Your custom authorizer
-    AuthHttpGuard,     // Your guard that uses AuthorizationService
     PrismaService
   ],
   controllers: [PostController]
