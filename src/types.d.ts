@@ -3,8 +3,6 @@ import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { ExecutionContext } from '@nestjs/common';
-import { AxiosRequestConfig } from 'axios';
-import { ZodType } from 'zod';
 
 export declare enum Action {
     Create = 'create',
@@ -88,7 +86,7 @@ export function createParamDecorator<T>(model: string, mapper: ContextMapper<T>)
  * @param permissions The permissions to check
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export declare function CanPerform<Resource extends AppSubject>(...permissions: Permission<Resource>[]): <TFunction extends Function, Y>(target: TFunction | object, propertyKey?: string | symbol, descriptor?: TypedPropertyDescriptor<Y>) => void;
+export declare function CanPerform<Resource extends AppSubject>(...permissions: Permission<Resource>[]): ClassDecorator & MethodDecorator;
 
 /**
  * Decorator to describe a class as an authorizer for the application
@@ -101,34 +99,6 @@ export declare function Authorizer(): <TFunction extends Function, Y>(target: TF
  * @param actions The actions to sort
  */
 export declare function sortActions(actions: Action[]): Action[];
-
-export declare class HttpModule {}
-
-export declare class HttpService {
-    /**
-     * Get the data from the given url and validate it with the given schema
-     * @param url The url to get the data from
-     * @param schema The schema to validate the data with
-     * @param options The options for the request
-     */
-    getSafe<DataType>(url: string, schema: ZodType<DataType>, options?: AxiosRequestConfig): TaskEither<DataType>;
-
-    /**
-     * Post the data to the given url and validate the response with the given schema
-     * @param url The url to post the data to
-     * @param schema The schema to validate the response with
-     * @param data The data to post
-     * @param options The options for the request
-     */
-    postSafe<DataType>(url: string, schema: ZodType<DataType>, data: unknown, options?: AxiosRequestConfig): TaskEither<DataType>;
-
-    /**
-     * Get the data from the given url
-     * @param url The url to get the data from
-     * @param options The options for the request
-     */
-    apiGet<T>(url: string, options?: AxiosRequestConfig): TaskEither<T>;
-}
 
 export declare class AuthorizationModule {}
 
