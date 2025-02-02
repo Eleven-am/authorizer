@@ -20,7 +20,7 @@
     "@anatine/zod-nestjs": "^2.0.10",
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
-    "@eleven-am/fp": "^0.0.17",
+    "@eleven-am/fp": "^0.0.18",
     "@eleven-am/pondsocket-nest": "^0.0.101",
     "@golevelup/nestjs-discovery": "^4.0.3",
     "@nestjs/axios": "^4.0.0",
