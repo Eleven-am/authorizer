@@ -144,11 +144,11 @@ export class PostController {
 
 ## WebSocket Support
 
-The package provides built-in support for PondSocket, a WebSocket library for NestJS. You can use the `@CurrentAbility.WS()` decorator to access the user's ability in WebSocket gateways:
+The package provides built-in support for [PondSocket](https://github.com/Eleven-am/pondSocket), a WebSocket library for NestJS. You can use the `@CurrentAbility.WS()` decorator to access the user's ability in WebSocket gateways:
 
 ```typescript
 @Channel('posts')
-export class PostEndpoint {
+export class PostChannel {
   @OnMessage('find-all')
   @CanPerform({ action: Action.Read, resource: 'Post' })
   async findAll(@CurrentAbility.WS() ability: AppAbilityType) {
