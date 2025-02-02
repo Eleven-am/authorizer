@@ -1,16 +1,32 @@
 # Authorizer
 
-A powerful, type-safe authorization package for NestJS applications that combines the flexibility of CASL with the power of TypeScript and NestJS decorators. Supports both HTTP and WebSocket contexts out of the box.
+A powerful, type-safe authorization package for NestJS applications that combines CASL's flexibility with TypeScript and NestJS decorators. Supports both HTTP and [PondSocket](https://github.com/Eleven-am/pondSocket) contexts out of the box.
 
 ## Features
 
-- 🔒 Type-safe permission definitions
-- 🚀 Support for both HTTP and WebSocket contexts
+- 🔒 Type-safe permission definitions with Prisma integration
+- 🚀 Built-in support for HTTP and PondSocket
 - 📝 Field-level permissions
-- 🎯 Easy integration with NestJS
-- 🔍 Prisma query integration
+- 🎯 Seamless NestJS integration
+- 🔍 Automatic Prisma query filtering with CASL
 - ⚡ Decorator-based permission checks
-- 🎨 Flexible rule definitions
+- 🎨 Declarative authorization rules
+
+## Why Use Authorizers?
+
+Traditional authorization approaches often scatter access control logic across services and controllers, leading to:
+- Duplicated authorization checks
+- Inconsistent rule enforcement
+- Mixed business and authorization logic
+- Maintenance difficulties
+- Potential security holes
+
+Authorizers solve these problems by:
+- Centralizing authorization logic
+- Providing type-safe permission definitions
+- Enforcing permissions at the database level
+- Creating clear boundaries between business and authorization logic
+- Enabling easy testing and maintenance
 
 ## Installation
 
@@ -18,11 +34,42 @@ A powerful, type-safe authorization package for NestJS applications that combine
 npm install @eleven-am/authorizer
 ```
 
-## Quick Start
+## Initial Setup
 
-### 1. Define Your Subject Types
+### 1. Configure Root Module
 
-First, import your Prisma types and extend the package's interfaces. Create a `types.ts` file:
+The `AuthorizationModule` **must** be imported in your root `AppModule`. This is crucial as it provides the `AuthorizationService` to the guards in your feature modules.
+
+```typescript
+import { AuthorizationModule } from '@eleven-am/authorizer';
+import { Module } from '@nestjs/common';
+
+@Module({
+  imports: [
+    // Import AuthorizationModule at the root level to provide AuthorizationService globally
+    AuthorizationModule,
+    
+    // Your feature modules can then use AuthorizationService
+    UserModule,
+    PostModule,
+  ],
+})
+export class AppModule {}
+
+// Feature modules don't need to import AuthorizationModule again
+@Module({
+  imports: [],  // NOT AuthorizationModule - it's already provided by root
+  providers: [
+    PostService,
+    PostAuthorizer,
+    AuthHttpGuard
+  ],
+  controllers: [PostController]
+})
+export class PostModule {}
+```
+
+### 2. Define Your Prisma Types
 
 ```typescript
 import {
@@ -32,7 +79,7 @@ import {
     // ... other Prisma models
 } from '@prisma/client';
 
-// Extend the package's types to include your Prisma models
+// Extend the package's types with your Prisma models
 declare module '@eleven-am/authorizer' {
     interface SubjectTypes {
         User: ModelUser;
@@ -46,9 +93,44 @@ declare module '@eleven-am/authorizer' {
 }
 ```
 
-This ensures type safety with your Prisma models.
+### 3. Create Authorization Guard
 
-### 3. Create an Authorizer
+```typescript
+import { AuthorizationService } from '@eleven-am/authorizer';
+import { TaskEither } from '@eleven-am/fp';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AuthHttpGuard implements CanActivate {
+    constructor(
+        protected readonly sessionService: SessionService,
+        protected readonly authorizationService: AuthorizationService,
+    ) {}
+
+    canActivate(context: ExecutionContext) {
+        const task = this.getSession(context)
+            .map((session) => session?.user ?? null)
+            .chain((user) => this.authorizationService.checkHttpAction(user, context));
+
+        return mapTaskEither(task);
+    }
+
+    private getSession(context: ExecutionContext) {
+        const request = context.switchToHttp().getRequest<Request>();
+        const token = this.extractToken(request);
+        
+        return TaskEither
+            .fromNullable(token)
+            .chain((token) => this.sessionService.readSession(token))
+            .orElse(() => TaskEither.of(null))
+            .ioSync((session) => {
+                request.session = session;
+            });
+    }
+}
+```
+
+### 4. Create Your Authorizer
 
 ```typescript
 @Authorizer()
@@ -67,20 +149,92 @@ class PostAuthorizer implements WillAuthorize {
 }
 ```
 
-### 4. Create Your Service
+### 5. Set Up Feature Module
+
+Once `AuthorizationModule` is imported in the root module, your feature modules can use the `AuthorizationService` without additional imports:
+
+```typescript
+@Module({
+  providers: [
+    PostService,
+    PostAuthorizer,    // Your custom authorizer
+    AuthHttpGuard,     // Your guard that uses AuthorizationService
+    PrismaService
+  ],
+  controllers: [PostController]
+})
+export class PostModule {}
+```
+
+## Usage
+
+### HTTP Controllers
+
+```typescript
+@UseGuards(AuthHttpGuard)
+@Controller('posts')
+export class PostController {
+  constructor(private postService: PostService) {}
+
+  @Get()
+  @CanPerform({ action: Action.Read, resource: 'Post' })
+  async getAllPosts(@CurrentAbility.HTTP() ability: AppAbilityType) {
+    return this.postService.findAll(ability);
+  }
+
+  @Patch(':id')
+  @CanPerform({ 
+    action: Action.Update, 
+    resource: 'Post',
+    field: 'content'
+  })
+  async updatePost(
+    @Param('id') id: number,
+    @Body() data: UpdatePostDto,
+    @CurrentAbility.HTTP() ability: AppAbilityType
+  ) {
+    return this.postService.update(id, data, ability);
+  }
+}
+```
+
+### PondSocket Integration
+
+This package is specifically designed to work with [PondSocket](https://github.com/Eleven-am/pondSocket) for WebSocket support:
+
+```typescript
+@UseGuards(AuthWsGuard)
+@Channel('posts')
+export class PostChannel {
+  @OnMessage('find-all')
+  @CanPerform({ action: Action.Read, resource: 'Post' })
+  async findAll(@CurrentAbility.WS() ability: AppAbilityType) {
+    return this.postService.findAll(ability);
+  }
+}
+```
+
+### Services with CASL Integration
 
 ```typescript
 @Injectable()
 export class PostService {
-  constructor(
-    private prisma: PrismaService,
-    private authService: AuthorizationService
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll(ability: AppAbilityType) {
-    // The ability can be used to filter queries
-    return this.prisma.post.findMany({ 
-        where: accessibleBy(ability).Post 
+    return this.prisma.post.findMany({
+      where: accessibleBy(ability).Post
+    });
+  }
+
+  async findWithComments(ability: AppAbilityType) {
+    return this.prisma.post.findMany({
+      where: accessibleBy(ability).Post,
+      include: {
+        comments: {
+          where: accessibleBy(ability).Comment
+        }
+      }
     });
   }
 
@@ -88,7 +242,6 @@ export class PostService {
     const post = await this.prisma.post.findUnique({ where: { id } });
     if (!post) throw new NotFoundException();
 
-    // You can use the ability to check permissions programmatically
     if (ability.can(Action.Update, post)) {
       return this.prisma.post.update({
         where: { id },
@@ -101,77 +254,39 @@ export class PostService {
 }
 ```
 
-### 5. Set Up Your Module
+## Key Concepts
 
-```typescript
-@Module({
-  imports: [AuthorizationModule],
-  providers: [
-    PostService,
-    PostAuthorizer, // Authorizer is just another provider
-    PrismaService
-  ],
-  controllers: [PostController]
-})
-export class AppModule {}
-```
+### Guards and Authorization Flow
 
-### 6. Use in Controllers
+1. Request arrives
+2. Guard extracts user session
+3. AuthorizationService checks permissions
+4. If authorized:
+    - Handler executes
+    - Service can assume authorization is handled
+5. If unauthorized:
+    - Request is rejected immediately
+    - No business logic executes
 
-```typescript
-@Controller('posts')
-export class PostController {
-  @Get()
-  @CanPerform({ action: Action.Read, resource: 'Post' })
-  async getAllPosts(@CurrentAbility.HTTP() ability: AppAbilityType) {
-    return this.postService.findAll();
-  }
+### Authorizers
 
-  @Patch(':id')
-  @CanPerform({ 
-    action: Action.Update, 
-    resource: 'Post',
-    field: 'content'
-  })
-  async updatePost(
-    @Param('id') id: number,
-    @Body() data: UpdatePostDto
-  ) {
-    return this.postService.update(id, data);
-  }
-}
-```
+Authorizers are NestJS providers that:
+- Define all permission rules in one place
+- Support dependency injection
+- Can be combined for complex scenarios
+- Keep authorization logic isolated
 
-## WebSocket Support
+### Database Integration
 
-The package provides built-in support for [PondSocket](https://github.com/Eleven-am/pondSocket), a WebSocket library for NestJS. You can use the `@CurrentAbility.WS()` decorator to access the user's ability in WebSocket gateways:
-
-```typescript
-@Channel('posts')
-export class PostChannel {
-  @OnMessage('find-all')
-  @CanPerform({ action: Action.Read, resource: 'Post' })
-  async findAll(@CurrentAbility.WS() ability: AppAbilityType) {
-    // Handle WebSocket message
-  }
-}
-```
-
-## Understanding Authorizers
-
-Authorizers in this package are simply NestJS providers that implement the `WillAuthorize` interface. They serve as a clean way to organize your authorization logic and can be injected anywhere in your application like any other provider.
-
-Key points about authorizers:
-- They are regular NestJS providers decorated with `@Authorizer()`
-- They can be injected into services and other providers
-- Multiple authorizers can coexist in your application
-- They can use dependency injection to access your services and repositories
+The package integrates with Prisma through CASL:
+- Automatically filters queries based on permissions
+- Supports relations and complex queries
+- Prevents N+1 query problems
+- Maintains consistent access control
 
 ## Advanced Usage
 
 ### Field-Level Permissions
-
-You can specify permissions for specific fields:
 
 ```typescript
 @CanPerform({ 
@@ -181,9 +296,24 @@ You can specify permissions for specific fields:
 })
 ```
 
-### Custom Authorization Logic
+### Complex Queries
 
-Implement custom authorization logic by extending the `checkHttpAction` or `checkSocketAction` methods:
+```typescript
+export class PostService {
+  async findWithComments(ability: AppAbilityType) {
+    return this.prisma.post.findMany({
+      where: accessibleBy(ability).Post,
+      include: {
+        comments: {
+          where: accessibleBy(ability).Comment
+        }
+      }
+    });
+  }
+}
+```
+
+### Custom Authorization Logic
 
 ```typescript
 @Authorizer()
@@ -197,125 +327,32 @@ class CustomAuthorizer implements WillAuthorize {
     rules: Permission[], 
     context: ExecutionContext
   ): TaskEither<boolean> {
-    // Implement custom HTTP authorization logic
+    // Custom HTTP authorization logic
     return TaskEither.right(true);
   }
 }
 ```
 
-### Using with Prisma and CASL's accessibleBy
-
-The package integrates seamlessly with Prisma through `@casl/prisma`. Here's how to use it with CASL's `accessibleBy`:
-
-```typescript
-import { accessibleBy } from '@casl/prisma';
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-
-@Injectable()
-export class PostService {
-  constructor(private prisma: PrismaService) {}
-
-  // Using with findMany
-  async findAll(ability: AppAbilityType) {
-    return this.prisma.post.findMany({
-      where: accessibleBy(ability).Post,
-    });
-  }
-
-  // Using with findFirst
-  async findOne(id: number, ability: AppAbilityType) {
-    return this.prisma.post.findFirst({
-      where: {
-        id,
-        AND: accessibleBy(ability).Post,
-      },
-    });
-  }
-
-  // Combining with other Prisma conditions
-  async findFiltered(
-    ability: AppAbilityType,
-    filters: Prisma.PostWhereInput
-  ) {
-    return this.prisma.post.findMany({
-      where: {
-        AND: [
-          filters,
-          accessibleBy(ability).Post,
-        ],
-      },
-    });
-  }
-
-  // Using with relations
-  async findWithComments(ability: AppAbilityType) {
-    return this.prisma.post.findMany({
-      where: accessibleBy(ability).Post,
-      include: {
-        comments: {
-          where: accessibleBy(ability).Comment,
-        },
-      },
-    });
-  }
-}
-
-// In your controller
-@Controller('posts')
-export class PostController {
-  constructor(private postService: PostService) {}
-
-  @Get()
-  @CanPerform({ action: Action.Read, resource: 'Post' })
-  async getAllPosts(@CurrentAbility.HTTP() ability: AppAbilityType) {
-    return this.postService.findAll(ability);
-  }
-
-  @Get(':id')
-  @CanPerform({ action: Action.Read, resource: 'Post' })
-  async getPost(
-    @Param('id') id: number,
-    @CurrentAbility.HTTP() ability: AppAbilityType
-  ) {
-    const post = await this.postService.findOne(id, ability);
-    if (!post) throw new NotFoundException();
-    return post;
-  }
-}
-```
-
-The `accessibleBy` function automatically converts CASL abilities into Prisma queries, ensuring that users can only access records they're authorized to see. This provides a robust way to filter data at the database level based on your authorization rules.
-
 ## API Reference
 
 ### Decorators
-
 - `@Authorizer()`: Marks a class as an authorizer
-- `@CanPerform()`: Checks if the user can perform specific actions
-- `@CurrentAbility`: Injects the current user's ability
-- `createParamDecorator`: Creates custom decorators for extracting data from the request context and socket connection
+- `@CanPerform()`: Checks permissions for routes/handlers
+- `@CurrentAbility`: Injects the current ability object
 
 ### Interfaces
+- `WillAuthorize`: For creating authorizers
+- `Permission`: Defines individual permissions
+- `RuleBuilder`: For building CASL rules
 
-- `WillAuthorize`: Interface for defining authorization rules
-- `Permission`: Interface for defining individual permissions
-- `RuleBuilder`: Interface for building CASL rules
+### Services
+- `AuthorizationService`: Core service for checking permissions. It should be used in guards to authorize requests before they reach controllers/services.
 
-### Enums
+## Requirements
 
-- `Action`: Available actions (Create, Read, Update, Delete, Manage)
-
-## Error Handling
-
-The package throws standard NestJS exceptions when authorization fails:
-
-- `UnauthorizedException`: When the user is not authenticated
-- `ForbiddenException`: When the user lacks required permissions
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines for details.
+- NestJS 8.0 or higher
+- PondSocket (for WebSocket support)
+- TypeScript 4.7 or higher
 
 ## License
 
@@ -323,11 +360,8 @@ Contributions are welcome! Please read our contributing guidelines for details.
 
 ## Credits
 
-Built with ❤️ using:
+Built with:
 - [NestJS](https://nestjs.com/)
 - [CASL](https://casl.js.org/)
 - [@casl/prisma](https://github.com/stalniy/casl/tree/master/packages/casl-prisma)
-
----
-
-Made with 🚀 by [Your Name/Organization]
+- [PondSocket](https://github.com/Eleven-am/pondSocket)
