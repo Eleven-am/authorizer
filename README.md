@@ -381,3 +381,4 @@ Built with:
 - [CASL](https://casl.js.org/)
 - [@casl/prisma](https://github.com/stalniy/casl/tree/master/packages/casl-prisma)
 - [PondSocket](https://github.com/Eleven-am/pondSocket)
+- [fp](https://github.com/Eleven-am/fp)
