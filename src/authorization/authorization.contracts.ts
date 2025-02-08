@@ -1,9 +1,9 @@
-import { createZodDto } from '@anatine/zod-nestjs';
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import type { ExecutionContext } from '@nestjs/common';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 
