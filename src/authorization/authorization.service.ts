@@ -113,18 +113,16 @@ export class AuthorizationService implements OnModuleInit {
     }
 
     private performAction (context: ExecutionContext | Context, rules: Permission[], authorizeTask: (user: User) => TaskEither<boolean>) {
-        return TaskEither
-            .of(rules)
+        return this.authenticator.retrieveUser(context)
             .matchTask([
                 {
-                    predicate: (rules) => rules.length === 0,
-                    run: () => this.authenticator.allowNoRulesAccess(context),
+                    predicate: (user) => user !== null,
+                    run: (user) => authorizeTask(user!),
                 },
                 {
-                    predicate: () => true,
-                    run: () => this.authenticator.retrieveUser(context)
-                        .chain((user) => authorizeTask(user)),
-                }
+                    predicate: () => rules.length === 0,
+                    run: () => this.authenticator.allowNoRulesAccess(context),
+                },
             ])
     }
 }
