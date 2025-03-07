@@ -36,27 +36,42 @@ npm install @eleven-am/authorizer
 
 ## Initial Setup
 
-### 1. Configure Root Module
+### 1. Configure Root Module with forRootAsync
 
-The `AuthorizationModule` **must** be imported in your root `AppModule`. This is crucial as it provides the `AuthorizationService` to the guards in your feature modules.
+The `AuthorizationModule` **must** be imported in your root `AppModule` using the `forRootAsync` method. This is crucial as it provides the authentication configuration and the `AuthorizationService` to the guards in your feature modules.
 
 ```typescript
-import { AuthorizationModule } from '@eleven-am/authorizer';
+import { AuthorizationModule, AuthorizationHttpGuard, AuthorizationSocketGuard, Authenticator } from '@eleven-am/authorizer';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthHttpGuard, AuthSocketGuard } from './auth.guard';
 import { UserModule } from './user.module';
 import { PostModule } from './post.module';
 import { PondSocketModule } from '@eleven-am/pondsocket-nest';
 import { Module } from '@nestjs/common';
+import { SessionService } from './session.service';
 
 @Module({
   imports: [
-    // Import AuthorizationModule at the root level to provide AuthorizationService globally
-    AuthorizationModule,
+    // Import AuthorizationModule at the root level using forRootAsync
+    AuthorizationModule.forRootAsync({
+      imports: [SessionModule],
+      inject: [SessionService],
+      useFactory: (sessionService: SessionService): Authenticator => ({
+        // Configure how to retrieve users from requests
+        retrieveUser: (context) => {
+          // Extract token from context and get user
+          return sessionService.getUserFromContext(context);
+        },
+        // Configure access for routes with no rules
+        allowNoRulesAccess: (context) => {
+          // Logic to determine if a user can access routes with no rules
+          return sessionService.isAuthenticated(context);
+        }
+      })
+    }),
           
-    // Import PondSocketModule with AuthSocketGuard
+    // Import PondSocketModule with AuthorizationSocketGuard
     PondSocketModule.forRoot({
-       guards: [AuthSocketGuard]
+       guards: [AuthorizationSocketGuard]
     }),
     
     // Your feature modules can then use AuthorizationService
@@ -66,8 +81,8 @@ import { Module } from '@nestjs/common';
   providers: [
      {
         provide: APP_GUARD,
-        // Use AuthHttpGuard for all HTTP routes
-        useClass: AuthHttpGuard
+        // Use AuthorizationHttpGuard for all HTTP routes
+        useClass: AuthorizationHttpGuard
      }
   ]
 })
@@ -78,8 +93,7 @@ export class AppModule {}
   imports: [],  // NOT AuthorizationModule - it's already provided by root
   providers: [
     PostService,
-    PostAuthorizer,
-    AuthHttpGuard
+    PostAuthorizer
   ],
   controllers: [PostController]
 })
@@ -110,44 +124,48 @@ declare module '@eleven-am/authorizer' {
 }
 ```
 
-### 3. Create Authorization Guard
+### 3. Understanding the Authenticator Interface
+
+The `Authenticator` interface is required when setting up the `AuthorizationModule` with `forRootAsync`:
 
 ```typescript
-import { AuthorizationService } from '@eleven-am/authorizer';
-import { TaskEither } from '@eleven-am/fp';
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+export interface Authenticator {
+  /**
+   * Allow the handling of requests with no rules
+   * @param context The context of the request
+   */
+  allowNoRulesAccess: (context: ExecutionContext | Context) => TaskEither<boolean>;
 
-@Injectable()
-export class AuthHttpGuard implements CanActivate {
-    constructor(
-        protected readonly sessionService: SessionService,
-        protected readonly authorizationService: AuthorizationService,
-    ) {}
-
-    canActivate(context: ExecutionContext) {
-        const task = this.getSession(context)
-            .map((session) => session?.user ?? null)
-            .chain((user) => this.authorizationService.checkHttpAction(user, context));
-
-        return mapTaskEither(task);
-    }
-
-    private getSession(context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest<Request>();
-        const token = this.extractToken(request);
-        
-        return TaskEither
-            .fromNullable(token)
-            .chain((token) => this.sessionService.readSession(token))
-            .orElse(() => TaskEither.of(null))
-            .ioSync((session) => {
-                request.session = session;
-            });
-    }
+  /**
+   * Retrieve the current user from the request
+   * @param context The context of the request
+   */
+  retrieveUser: (context: ExecutionContext | Context) => TaskEither<User>;
 }
 ```
 
-### 4. Create Your Authorizer
+This interface defines how users are authenticated and how to handle routes with no explicit rules.
+
+### 4. Customize the Built-in Guards (Optional)
+
+The package now exports `AuthorizationHttpGuard` and `AuthorizationSocketGuard` which you can use directly. If you need custom functionality, you can extend these guards:
+
+```typescript
+import { AuthorizationHttpGuard, AuthorizationSocketGuard } from '@eleven-am/authorizer';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class CustomHttpGuard extends AuthorizationHttpGuard {
+    // Override methods or add custom functionality
+}
+
+@Injectable()
+export class CustomSocketGuard extends AuthorizationSocketGuard {
+    // Override methods or add custom functionality
+}
+```
+
+### 5. Create Your Authorizer
 
 ```typescript
 @Authorizer()
@@ -166,7 +184,7 @@ class PostAuthorizer implements WillAuthorize {
 }
 ```
 
-### 5. Set Up Feature Module
+### 6. Set Up Feature Module
 
 Once `AuthorizationModule` is imported in the root module, your feature modules can use the `AuthorizationService` without additional imports:
 
@@ -187,7 +205,7 @@ export class PostModule {}
 ### HTTP Controllers
 
 ```typescript
-@UseGuards(AuthHttpGuard)
+@UseGuards(AuthorizationHttpGuard) // Or your custom guard
 @Controller('posts')
 export class PostController {
   constructor(private postService: PostService) {}
@@ -219,7 +237,7 @@ export class PostController {
 This package is specifically designed to work with [PondSocket](https://github.com/Eleven-am/pondSocket) for WebSocket support:
 
 ```typescript
-@UseGuards(AuthWsGuard)
+@UseGuards(AuthorizationSocketGuard) // Or your custom socket guard
 @Channel('posts')
 export class PostChannel {
   @OnMessage('find-all')
@@ -278,11 +296,11 @@ export class PostService {
 2. Guard extracts user session
 3. AuthorizationService checks permissions
 4. If authorized:
-    - Handler executes
-    - Service can assume authorization is handled
+   - Handler executes
+   - Service can assume authorization is handled
 5. If unauthorized:
-    - Request is rejected immediately
-    - No business logic executes
+   - Request is rejected immediately
+   - No business logic executes
 
 ### Authorizers
 
@@ -363,6 +381,10 @@ class CustomAuthorizer implements WillAuthorize {
 
 ### Services
 - `AuthorizationService`: Core service for checking permissions. It should be used in guards to authorize requests before they reach controllers/services.
+
+### Guards
+- `AuthorizationHttpGuard`: Pre-built guard for HTTP requests
+- `AuthorizationSocketGuard`: Pre-built guard for WebSocket connections
 
 ## Requirements
 
