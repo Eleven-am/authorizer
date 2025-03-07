@@ -7,7 +7,7 @@ import { AuthorizationReflector } from './authorization.reflector';
 import { AuthorizationService } from './authorization.service';
 
 export class AuthorizationModule {
-    static forRoot ({
+    static forRootAsync ({
         providers,
         imports,
         exports,
