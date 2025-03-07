@@ -154,4 +154,4 @@ export declare class HttpExceptionSchema {
 
 export declare class AuthorizationHttpGuard implements CanActivate {}
 
-export class AuthorizationSocketGuard implements CanActivateSocket {}
+export declare class AuthorizationSocketGuard implements CanActivateSocket {}
