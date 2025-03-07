@@ -1,11 +1,12 @@
 import { AbilityBuilder, ForbiddenError } from '@casl/ability';
 import { createPrismaAbility } from '@casl/prisma';
-import { TaskEither, createUnauthorizedError } from '@eleven-am/fp';
+import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject } from '@nestjs/common';
+import { Authenticator } from '../types';
 
-import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY } from './authorization.constants';
+import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY, AUTHENTICATION_BACKEND } from './authorization.constants';
 import { WillAuthorize, User, Permission, AppAbilityType } from './authorization.contracts';
 import { AuthorizationReflector } from './authorization.reflector';
 
@@ -16,6 +17,7 @@ export class AuthorizationService implements OnModuleInit {
     constructor (
         private readonly discoverService: DiscoveryService,
         private readonly reflector: AuthorizationReflector,
+        @Inject(AUTHENTICATION_BACKEND) private readonly authenticator: Authenticator,
     ) {}
 
     async onModuleInit () {
@@ -24,17 +26,12 @@ export class AuthorizationService implements OnModuleInit {
         this.authorizers = classes.map((provider) => provider.discoveredClass.instance as WillAuthorize);
     }
 
-    checkHttpAction (user: User | null, context: ExecutionContext) {
+    checkHttpAction (context: ExecutionContext) {
         const rules = this.getRules(context);
         const request = context.switchToHttp().getRequest();
 
-        if (rules.length === 0) {
-            return TaskEither.of(true);
-        }
-
-        return TaskEither
-            .fromNullable(user)
-            .mapError(() => createUnauthorizedError('User is not authenticated'))
+        const httpAction = (user: User)=>  TaskEither
+            .of(user)
             .map((user) => this.defineAbilityFor(user, rules))
             .map(({ ability, authorizers }) => {
                 const hasHttpAction = authorizers.filter((authorizer): authorizer is Required<WillAuthorize> => 'checkHttpAction' in authorizer);
@@ -46,14 +43,15 @@ export class AuthorizationService implements OnModuleInit {
             })
             .chain((tasks) => TaskEither.all(...tasks))
             .map(() => true);
+
+        return this.performAction(context, rules, httpAction);
     }
 
-    checkSocketAction (user: User | null, context: Context) {
+    checkSocketAction (context: Context) {
         const rules = this.getRules(context);
 
-        return TaskEither
-            .fromNullable(user)
-            .mapError(() => createUnauthorizedError('User is not authenticated'))
+        const socketAction = (user: User) => TaskEither
+            .of(user)
             .map((user) => this.defineAbilityFor(user, rules))
             .map(({ ability, authorizers }) => {
                 const hasSocketAction = authorizers.filter((authorizer): authorizer is Required<WillAuthorize> => 'checkSocketAction' in authorizer);
@@ -65,6 +63,8 @@ export class AuthorizationService implements OnModuleInit {
             })
             .chain((tasks) => TaskEither.all(...tasks))
             .map(() => true);
+
+        return this.performAction(context, rules, socketAction);
     }
 
     private getRules (context: ExecutionContext | Context) {
@@ -110,5 +110,21 @@ export class AuthorizationService implements OnModuleInit {
         } catch (e) {
             throw new ForbiddenException(e.message);
         }
+    }
+
+    private performAction (context: ExecutionContext | Context, rules: Permission[], authorizeTask: (user: User) => TaskEither<boolean>) {
+        return TaskEither
+            .of(rules)
+            .matchTask([
+                {
+                    predicate: (rules) => rules.length === 0,
+                    run: () => this.authenticator.allowNoRulesAccess(context),
+                },
+                {
+                    predicate: () => true,
+                    run: () => this.authenticator.retrieveUser(context)
+                        .chain((user) => authorizeTask(user)),
+                }
+            ])
     }
 }

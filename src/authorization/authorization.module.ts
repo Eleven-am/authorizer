@@ -1,13 +1,31 @@
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
-import { Module, Global } from '@nestjs/common';
+import { DynamicModule, Provider } from '@nestjs/common';
+import { AsyncMetadata } from '../types';
+import { AUTHENTICATION_BACKEND } from './authorization.constants';
 
 import { AuthorizationReflector } from './authorization.reflector';
 import { AuthorizationService } from './authorization.service';
 
-@Global()
-@Module({
-    imports: [DiscoveryModule],
-    providers: [AuthorizationReflector, AuthorizationService],
-    exports: [AuthorizationService],
-})
-export class AuthorizationModule {}
+export class AuthorizationModule {
+    static forRoot ({
+        providers,
+        imports,
+        exports,
+        inject,
+        useFactory,
+    }: AsyncMetadata): DynamicModule {
+        const provider: Provider = {
+            provide: AUTHENTICATION_BACKEND,
+            inject,
+            useFactory,
+        };
+
+        return {
+            global: true,
+            module: AuthorizationModule,
+            imports: [DiscoveryModule, ...(imports || [])],
+            exports: [AuthorizationService, ...(exports || [])],
+            providers: [provider, AuthorizationReflector, AuthorizationService, ...(providers || [])],
+        };
+    }
+}

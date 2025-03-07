@@ -1,4 +1,4 @@
-import { Context, createParamDecorator as socketDecorator, ParamDecoratorCallback } from '@eleven-am/pondsocket-nest';
+import { Context, createParamDecorator as socketDecorator } from '@eleven-am/pondsocket-nest';
 import {
     createParamDecorator as httpDecorator,
     ExecutionContext,
@@ -6,7 +6,6 @@ import {
     applyDecorators,
     SetMetadata,
     Injectable,
-    BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
@@ -15,29 +14,18 @@ import { AppSubject, Permission, HttpExceptionSchema, AppAbilityType } from './a
 
 type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
 
-function filterFalsy <T> (model: string, mapper: ContextMapper<T>): ParamDecoratorCallback<void, unknown> {
-    return (_, context) => {
-        const result = mapper(context);
 
-        if (!result) {
-            throw new BadRequestException(`${model} not found`);
-        }
-
-        return result;
-    };
-}
-
-function getRequestBody <T> (model: string, mapper: ContextMapper<T>) {
+function getRequestBody <T> (mapper: ContextMapper<T>) {
     return (data: void, context: ExecutionContext) => {
         const request = context.switchToHttp().getRequest();
 
-        return filterFalsy(model, mapper)(data, request, null);
+        return mapper(request);
     };
 }
 
-export function createParamDecorator<T> (model: string, mapper: ContextMapper<T>) {
-    const socket = socketDecorator(filterFalsy(model, mapper));
-    const http = httpDecorator(getRequestBody(model, mapper));
+export function createParamDecorator<T> (mapper: ContextMapper<T>) {
+    const socket = socketDecorator(mapper);
+    const http = httpDecorator(getRequestBody(mapper));
 
     return {
         WS: socket,
@@ -46,7 +34,6 @@ export function createParamDecorator<T> (model: string, mapper: ContextMapper<T>
 }
 
 export const CurrentAbility = createParamDecorator(
-    'Ability',
     (ctx) => {
         let ability: AppAbilityType | null;
 
@@ -57,7 +44,7 @@ export const CurrentAbility = createParamDecorator(
         }
 
         if (!ability) {
-            throw new UnauthorizedException('Ability not found');
+            throw new UnauthorizedException('No ability found');
         }
 
         return ability;

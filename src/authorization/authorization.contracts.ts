@@ -2,7 +2,9 @@ import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
-import type { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiProperty } from '@nestjs/swagger';
+import { Response } from 'express';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -55,4 +57,49 @@ const httpExceptionSchema = z.object({
     error: z.string(),
 });
 
-export class HttpExceptionSchema extends createZodDto(httpExceptionSchema) {}
+export class HttpExceptionDto extends createZodDto(httpExceptionSchema) {}
+
+export class RedirectException extends HttpException {
+    constructor (private readonly url: string, message: string, status: number) {
+        super(message, status);
+    }
+
+    public handle (response: Response) {
+        response.redirect(this.url);
+    }
+}
+
+export class TemporaryRedirectException extends RedirectException {
+    constructor (url: string) {
+        super(url, `Temporary redirect to ${url}`, HttpStatus.TEMPORARY_REDIRECT);
+    }
+}
+
+export class PermanentRedirectException extends RedirectException {
+    constructor (url: string) {
+        super(url, `Permanent redirect to ${url}`, HttpStatus.PERMANENT_REDIRECT);
+    }
+}
+
+export class HttpExceptionSchema {
+    @ApiProperty({
+        example: 404,
+        description: 'HTTP status code',
+        type: Number,
+    })
+    statusCode: number;
+
+    @ApiProperty({
+        example: 'Not Found',
+        description: 'HTTP status message',
+        type: String,
+    })
+    message: string;
+
+    @ApiProperty({
+        example: 'The requested resource was not found',
+        description: 'HTTP status error',
+        type: String,
+    })
+    error: string;
+}

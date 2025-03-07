@@ -1,8 +1,8 @@
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
-import { Context } from '@eleven-am/pondsocket-nest';
-import { ExecutionContext } from '@nestjs/common';
+import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
+import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate } from '@nestjs/common';
 
 export declare enum Action {
     Create = 'create',
@@ -54,18 +54,29 @@ export interface WillAuthorize {
     checkSocketAction?(ability: AppAbilityType, rules: Permission[], context: Context): TaskEither<boolean>;
 }
 
+export interface Authenticator {
+    /**
+     * Allow the handling of requests with no rules
+     * @param context The context of the request
+     */
+    allowNoRulesAccess: (context: ExecutionContext | Context) => TaskEither<boolean>;
+
+    /**
+     * Retrieve the current user from the request
+     * @param context The context of the request
+     */
+    retrieveUser: (context: ExecutionContext | Context) => TaskEither<User>;
+}
+
+export interface AsyncMetadata extends ModuleMetadata {
+    inject?: any[];
+    useFactory: (...args: any[]) => Promise<Authenticator> | Authenticator;
+}
+
 export interface Permission<Resource extends AppSubject = AppSubject> {
     action: Action;
     resource: Resource;
     field?: KeyOfSubject<Resource>;
-}
-
-export declare class HttpExceptionSchema {
-    statusCode: number;
-
-    message: string;
-
-    error: string;
 }
 
 /**
@@ -76,7 +87,7 @@ export declare const CurrentAbility: {
     HTTP: () => ParameterDecorator;
 };
 
-export function createParamDecorator<T>(model: string, mapper: ContextMapper<T>): {
+export function createParamDecorator<T>(mapper: ContextMapper<T>): {
     WS: () => ParameterDecorator;
     HTTP: () => ParameterDecorator;
 };
@@ -100,20 +111,47 @@ export declare function Authorizer(): <TFunction extends Function, Y>(target: TF
  */
 export declare function sortActions(actions: Action[]): Action[];
 
-export declare class AuthorizationModule {}
+/**
+ * Run the given task and map the result to a success or failure, throwing an error if the task fails
+ * @param task The task to map
+ * @param logger The logger to log errors with
+ */
+export function mapTaskEither<DataType>(task: TaskEither<DataType>, logger: LoggerService): Promise<DataType>;
 
-export declare class AuthorizationService {
-    /**
-     * Check if the user is allowed to perform the given http action, to be used in a guard
-     * @param user The user to check the action for
-     * @param context The context of the request
-     */
-    checkHttpAction(user: User | null, context: ExecutionContext): TaskEither<boolean>;
-
-    /**
-     * Check if the user is allowed to perform the given socket action, to be used in a guard
-     * @param user The user to check the action for
-     * @param context The context of the request
-     */
-    checkSocketAction(user: User | null, context: Context): TaskEither<boolean>;
+export declare class AuthorizationModule {
+    static forRootAsync(metadata: AsyncMetadata): DynamicModule;
 }
+
+export declare class RedirectException extends HttpException {
+    constructor(url: string, message: string, status: number);
+
+    /**
+     * Handle the exception by redirecting the response
+     * @param response The response to redirect
+     */
+    handle(response: Response): void;
+}
+
+export declare class TemporaryRedirectException extends RedirectException {
+    constructor(url: string);
+}
+
+export declare class PermanentRedirectException extends RedirectException {
+    constructor(url: string);
+}
+
+export declare class HttpExceptionDto {
+    statusCode: number;
+    message: string;
+    error: string;
+}
+
+export declare class HttpExceptionSchema {
+    statusCode: number;
+    message: string;
+    error: string;
+}
+
+export declare class AuthorizationHttpGuard implements CanActivate {}
+
+export class AuthorizationSocketGuard implements CanActivateSocket {}
