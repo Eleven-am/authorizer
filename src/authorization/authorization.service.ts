@@ -1,6 +1,6 @@
 import { AbilityBuilder, ForbiddenError } from '@casl/ability';
 import { createPrismaAbility } from '@casl/prisma';
-import { TaskEither } from '@eleven-am/fp';
+import { TaskEither, createUnauthorizedError } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject } from '@nestjs/common';
@@ -114,15 +114,15 @@ export class AuthorizationService implements OnModuleInit {
 
     private performAction (context: ExecutionContext | Context, rules: Permission[], authorizeTask: (user: User) => TaskEither<boolean>) {
         return this.authenticator.retrieveUser(context)
-            .matchTask([
-                {
-                    predicate: (user) => user !== null,
-                    run: (user) => authorizeTask(user!),
-                },
-                {
-                    predicate: () => rules.length === 0,
-                    run: () => this.authenticator.allowNoRulesAccess(context),
-                },
-            ])
+            .chain(authorizeTask)
+            .orElse(() => TaskEither
+                .of(rules)
+                .filter(
+                    (rules) => rules.length === 0,
+                    () => createUnauthorizedError('User is not authenticated'),
+                )
+                .chain(() => this.authenticator.allowNoRulesAccess(context))
+            )
+            .mapError(() => createUnauthorizedError('User is not authenticated'));
     }
 }

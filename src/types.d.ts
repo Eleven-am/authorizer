@@ -66,7 +66,7 @@ export interface Authenticator {
      * Retrieve the current user from the request
      * @param context The context of the request
      */
-    retrieveUser: (context: ExecutionContext | Context) => TaskEither<User | null>;
+    retrieveUser: (context: ExecutionContext | Context) => TaskEither<User>;
 }
 
 export interface AsyncMetadata extends ModuleMetadata {
