@@ -3,6 +3,7 @@ import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
 import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate } from '@nestjs/common';
+import { Response } from 'express';
 
 export declare enum Action {
     Create = 'create',
