@@ -152,6 +152,10 @@ export declare class HttpExceptionSchema {
     error: string;
 }
 
-export declare class AuthorizationHttpGuard implements CanActivate {}
+export declare class AuthorizationHttpGuard implements CanActivate {
+    canActivate(context: ExecutionContext): Promise<boolean>;
+}
 
-export declare class AuthorizationSocketGuard implements CanActivateSocket {}
+export declare class AuthorizationSocketGuard implements CanActivateSocket {
+    canActivate(context: Context): Promise<boolean>;
+}
