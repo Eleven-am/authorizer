@@ -14,7 +14,6 @@ import { AppSubject, Permission, HttpExceptionSchema, AppAbilityType } from './a
 
 type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
 
-
 function getRequestBody <T> (mapper: ContextMapper<T>) {
     return (data: void, context: ExecutionContext) => {
         const request = context.switchToHttp().getRequest();

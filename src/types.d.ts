@@ -97,14 +97,12 @@ export function createParamDecorator<T>(mapper: ContextMapper<T>): {
  * Decorator to check if the user can perform the given permissions
  * @param permissions The permissions to check
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export declare function CanPerform<Resource extends AppSubject>(...permissions: Permission<Resource>[]): ClassDecorator & MethodDecorator;
 
 /**
  * Decorator to describe a class as an authorizer for the application
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export declare function Authorizer(): <TFunction extends Function, Y>(target: TFunction | object, propertyKey?: string | symbol, descriptor?: TypedPropertyDescriptor<Y>) => void;
+export declare function Authorizer(): ClassDecorator;
 
 /**
  * Sort the given actions by their priority
