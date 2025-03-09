@@ -26,45 +26,48 @@ export class AuthorizationService implements OnModuleInit {
         this.authorizers = classes.map((provider) => provider.discoveredClass.instance as WillAuthorize);
     }
 
-    checkHttpAction (context: ExecutionContext) {
-        const rules = this.getRules(context);
-        const request = context.switchToHttp().getRequest();
-
-        const httpAction = (user: User)=>  TaskEither
-            .of(user)
-            .map((user) => this.defineAbilityFor(user, rules))
-            .map(({ ability, authorizers }) => {
-                const hasHttpAction = authorizers.filter((authorizer): authorizer is Required<WillAuthorize> => 'checkHttpAction' in authorizer);
-                const tasks = hasHttpAction.map((authorizer) => authorizer.checkHttpAction(ability, rules, context));
-
-                request.ability = ability;
-
-                return tasks;
-            })
-            .chain((tasks) => TaskEither.all(...tasks))
-            .map(() => true);
-
-        return this.performAction(context, rules, httpAction);
-    }
-
-    checkSocketAction (context: Context) {
+    checkAction (context: ExecutionContext | Context) {
         const rules = this.getRules(context);
 
-        const socketAction = (user: User) => TaskEither
-            .of(user)
+        const action = (user: User) =>  TaskEither.of(user)
             .map((user) => this.defineAbilityFor(user, rules))
-            .map(({ ability, authorizers }) => {
-                const hasSocketAction = authorizers.filter((authorizer): authorizer is Required<WillAuthorize> => 'checkSocketAction' in authorizer);
-                const tasks = hasSocketAction.map((authorizer) => authorizer.checkSocketAction(ability, rules, context));
+            .matchTask([
+                {
+                    predicate: () => context instanceof Context,
+                    run: ({ ability, authorizers }) => TaskEither
+                        .of(authorizers)
+                        .filterItems((item): item is Required<WillAuthorize> => 'checkSocketAction' in item)
+                        .chainItems((item: Required<WillAuthorize>) => item.checkSocketAction(ability, rules, context as Context))
+                        .ioSync(() => (context as Context).addData<AppAbilityType>(ABILITY_KEY, ability))
+                },
+                {
+                    predicate: () => 'switchToHttp' in context,
+                    run: ({ ability, authorizers }) => TaskEither
+                        .of(authorizers)
+                        .filterItems((item): item is Required<WillAuthorize> => 'checkHttpAction' in item)
+                        .chainItems((item: Required<WillAuthorize>) => item.checkHttpAction(ability, rules, context as ExecutionContext))
+                        .ioSync(() => (context as ExecutionContext).switchToHttp().getRequest().ability = ability)
+                }
+            ])
+            .filterItems((result) => result)
+            .filter(
+                (items) => items.length > 0,
+                () => createUnauthorizedError('Unauthorized'),
+            )
+            .map(() => true)
 
-                context.addData<AppAbilityType>(ABILITY_KEY, ability);
-
-                return tasks;
-            })
-            .chain((tasks) => TaskEither.all(...tasks))
-            .map(() => true);
-
-        return this.performAction(context, rules, socketAction);
+        return this.authenticator.retrieveUser(context).orNull()
+            .matchTask([
+                {
+                    predicate: (user) => Boolean(user),
+                    run: action,
+                },
+                {
+                    predicate: () => rules.length === 0,
+                    run: () => this.authenticator.allowNoRulesAccess(context),
+                }
+            ])
+            .mapError(() => createUnauthorizedError('User is not authenticated'))
     }
 
     private getRules (context: ExecutionContext | Context) {
@@ -110,19 +113,5 @@ export class AuthorizationService implements OnModuleInit {
         } catch (e) {
             throw new ForbiddenException(e.message);
         }
-    }
-
-    private performAction (context: ExecutionContext | Context, rules: Permission[], authorizeTask: (user: User) => TaskEither<boolean>) {
-        return this.authenticator.retrieveUser(context)
-            .chain(authorizeTask)
-            .orElse(() => TaskEither
-                .of(rules)
-                .filter(
-                    (rules) => rules.length === 0,
-                    () => createUnauthorizedError('User is not authenticated'),
-                )
-                .chain(() => this.authenticator.allowNoRulesAccess(context))
-            )
-            .mapError(() => createUnauthorizedError('User is not authenticated'));
     }
 }

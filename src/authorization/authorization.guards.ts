@@ -11,7 +11,7 @@ export class AuthorizationHttpGuard implements CanActivate {
     constructor (protected readonly authorizationService: AuthorizationService) {}
 
     canActivate (context: ExecutionContext) {
-        const task = this.authorizationService.checkHttpAction(context);
+        const task = this.authorizationService.checkAction(context);
 
         return mapTaskEither(task, this.logger);
     }
@@ -24,7 +24,7 @@ export class AuthorizationSocketGuard implements CanActivateSocket {
     constructor (protected readonly authorizationService: AuthorizationService) {}
 
     canActivate (context: Context) {
-        const task = this.authorizationService.checkSocketAction(context);
+        const task = this.authorizationService.checkAction(context);
 
         return mapTaskEither(task, this.logger);
     }
