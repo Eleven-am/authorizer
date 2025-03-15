@@ -22,8 +22,12 @@ function getRequestBody <T> (mapper: ContextMapper<T>) {
     };
 }
 
+function socketMapper <T> (mapper: ContextMapper<T>) {
+    return (data: void, context: Context) => mapper(context);
+}
+
 export function createParamDecorator<T> (mapper: ContextMapper<T>) {
-    const socket = socketDecorator(mapper);
+    const socket = socketDecorator(socketMapper(mapper));
     const http = httpDecorator(getRequestBody(mapper));
 
     return {
