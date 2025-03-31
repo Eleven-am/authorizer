@@ -40,7 +40,7 @@ export class AuthorizationContext {
         return Boolean(this.#httpContext);
     }
 
-    get request (): Request {
+    get request (): Request & Record<string, unknown> {
         if (this.#httpContext) {
             return this.#httpContext.switchToHttp().getRequest();
         }
