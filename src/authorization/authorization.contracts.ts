@@ -1,12 +1,12 @@
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
-import { Context } from '@eleven-am/pondsocket-nest';
-import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Response } from 'express';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { AuthorizationContext } from './authorization.context';
 
 
 export enum Action {
@@ -33,15 +33,10 @@ export type RuleBuilder = Pick<AbilityBuilder<AppAbilityType>, 'can' | 'cannot'>
 
 export interface WillAuthorize {
     forUser(user: User, builder: RuleBuilder): void;
-    checkHttpAction?(
+    authorize?(
+        context: AuthorizationContext,
         ability: AppAbilityType,
         rules: Permission[],
-        context: ExecutionContext,
-    ): TaskEither<boolean>;
-    checkSocketAction?(
-        ability: AppAbilityType,
-        rules: Permission[],
-        context: Context,
     ): TaskEither<boolean>;
 }
 

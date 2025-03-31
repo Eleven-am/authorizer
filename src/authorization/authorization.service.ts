@@ -7,6 +7,7 @@ import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject 
 import { Authenticator } from '../types';
 
 import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY, AUTHENTICATION_BACKEND } from './authorization.constants';
+import { AuthorizationContext } from './authorization.context';
 import { WillAuthorize, User, Permission, AppAbilityType } from './authorization.contracts';
 import { AuthorizationReflector } from './authorization.reflector';
 
@@ -26,29 +27,16 @@ export class AuthorizationService implements OnModuleInit {
         this.authorizers = classes.map((provider) => provider.discoveredClass.instance as WillAuthorize);
     }
 
-    checkAction (context: ExecutionContext | Context) {
+    checkAction (ctx: ExecutionContext | Context) {
+        const context = new AuthorizationContext(ctx);
         const rules = this.getRules(context);
 
         const action = (user: User) =>  TaskEither.of(user)
             .map((user) => this.defineAbilityFor(user, rules))
-            .matchTask([
-                {
-                    predicate: () => context instanceof Context,
-                    run: ({ ability, authorizers }) => TaskEither
-                        .of(authorizers)
-                        .filterItems((item): item is Required<WillAuthorize> => 'checkSocketAction' in item)
-                        .chainItems((item: Required<WillAuthorize>) => item.checkSocketAction(ability, rules, context as Context))
-                        .ioSync(() => (context as Context).addData<AppAbilityType>(ABILITY_KEY, ability))
-                },
-                {
-                    predicate: () => 'switchToHttp' in context,
-                    run: ({ ability, authorizers }) => TaskEither
-                        .of(authorizers)
-                        .filterItems((item): item is Required<WillAuthorize> => 'checkHttpAction' in item)
-                        .chainItems((item: Required<WillAuthorize>) => item.checkHttpAction(ability, rules, context as ExecutionContext))
-                        .ioSync(() => (context as ExecutionContext).switchToHttp().getRequest().ability = ability)
-                }
-            ])
+            .chain(({ ability, authorizers }) => TaskEither
+                .of(authorizers)
+                .chainItems((item) => item.authorize(context, ability, rules))
+                .ioSync(() => context.addData<AppAbilityType>(ABILITY_KEY, ability)))
             .filterItems((result) => result)
             .filter(
                 (items) => items.length > 0,
@@ -70,7 +58,7 @@ export class AuthorizationService implements OnModuleInit {
             .mapError(() => createUnauthorizedError('User is not authenticated'))
     }
 
-    private getRules (context: ExecutionContext | Context) {
+    private getRules (context: AuthorizationContext) {
         return this.reflector.getAllAndMerge<Permission[]>(
             CAN_PERFORM_KEY,
             [
@@ -106,9 +94,11 @@ export class AuthorizationService implements OnModuleInit {
                     );
             });
 
+            const filteredAuthorizers = authorizers.filter((authorizer): authorizer is Required<WillAuthorize> => 'authorize' in authorizer);
+
             return {
                 ability,
-                authorizers,
+                authorizers: filteredAuthorizers,
             };
         } catch (e) {
             throw new ForbiddenException(e.message);

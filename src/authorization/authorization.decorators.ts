@@ -10,25 +10,22 @@ import {
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { CAN_PERFORM_KEY, AUTHORIZER_KEY, ABILITY_KEY } from './authorization.constants';
+import { AuthorizationContext } from './authorization.context';
 import { AppSubject, Permission, HttpExceptionSchema, AppAbilityType } from './authorization.contracts';
 
-type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
-
-function getRequestBody <T> (mapper: ContextMapper<T>) {
-    return (data: void, context: ExecutionContext) => {
-        const request = context.switchToHttp().getRequest();
-
-        return mapper(request);
-    };
-}
+type ContextMapper<Output> = (context: AuthorizationContext) => Output;
 
 function socketMapper <T> (mapper: ContextMapper<T>) {
-    return (data: void, context: Context) => mapper(context);
+    return (data: void, context: Context) => mapper(new AuthorizationContext(context));
+}
+
+function httpMapper <T> (mapper: ContextMapper<T>) {
+    return (data: void, context: ExecutionContext) => mapper(new AuthorizationContext(context));
 }
 
 export function createParamDecorator<T> (mapper: ContextMapper<T>) {
     const socket = socketDecorator(socketMapper(mapper));
-    const http = httpDecorator(getRequestBody(mapper));
+    const http = httpDecorator(httpMapper(mapper));
 
     return {
         WS: socket,
@@ -38,13 +35,7 @@ export function createParamDecorator<T> (mapper: ContextMapper<T>) {
 
 export const CurrentAbility = createParamDecorator(
     (ctx) => {
-        let ability: AppAbilityType | null;
-
-        if (ctx instanceof Context) {
-            ability = ctx.getData<AppAbilityType>(ABILITY_KEY);
-        } else {
-            ability = ctx.ability ?? null;
-        }
+        const ability = ctx.getData<AppAbilityType>(ABILITY_KEY);
 
         if (!ability) {
             throw new UnauthorizedException('No ability found');

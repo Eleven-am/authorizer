@@ -2,8 +2,8 @@ import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
-import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate } from '@nestjs/common';
-import { Response } from 'express';
+import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate, Type } from '@nestjs/common';
+import { Response, Request } from 'express';
 
 export declare enum Action {
     Create = 'create',
@@ -27,7 +27,7 @@ export type AppAbilityType = PureAbility<[Action, AppSubject], PrismaQuery>;
 
 export type RuleBuilder = Pick<AbilityBuilder<AppAbilityType>, 'can' | 'cannot'>;
 
-export type ContextMapper<T> = (context: Request & Record<string, any> | Context) => T;
+export type ContextMapper<T> = (context: AuthorizationContext) => T;
 
 export interface WillAuthorize {
 
@@ -39,20 +39,12 @@ export interface WillAuthorize {
     forUser(user: User, builder: RuleBuilder): void;
 
     /**
-     * Check if the user is allowed to perform the given http action
+     * Check if the user is allowed to perform the given action on the given resource
+     * @param context The context of the request
      * @param ability The ability to check the action with
      * @param rules The rules to check against
-     * @param context The context of the request
      */
-    checkHttpAction?(ability: AppAbilityType, rules: Permission[], context: ExecutionContext): TaskEither<boolean>;
-
-    /**
-     * Check if the user is allowed to perform the given socket action
-     * @param ability The ability to check the action with
-     * @param rules The rules to check against
-     * @param context The context of the request
-     */
-    checkSocketAction?(ability: AppAbilityType, rules: Permission[], context: Context): TaskEither<boolean>;
+    authorize?(context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]): TaskEither<boolean>;
 }
 
 export interface Authenticator {
@@ -60,13 +52,13 @@ export interface Authenticator {
      * Allow the handling of requests with no rules
      * @param context The context of the request
      */
-    allowNoRulesAccess: (context: ExecutionContext | Context) => TaskEither<boolean>;
+    allowNoRulesAccess: (context: AuthorizationContext) => TaskEither<boolean>;
 
     /**
      * Retrieve the current user from the request
      * @param context The context of the request
      */
-    retrieveUser: (context: ExecutionContext | Context) => TaskEither<User>;
+    retrieveUser: (context: AuthorizationContext) => TaskEither<User>;
 }
 
 export interface AsyncMetadata extends ModuleMetadata {
@@ -157,4 +149,43 @@ export declare class AuthorizationHttpGuard implements CanActivate {
 
 export declare class AuthorizationSocketGuard implements CanActivateSocket {
     canActivate(context: Context): Promise<boolean>;
+}
+
+export declare class AuthorizationContext {
+    get socketContext (): Context;
+
+    get httpContext (): ExecutionContext;
+
+    get isSocket (): boolean;
+
+    get isHttp (): boolean;
+
+    get request (): Request;
+
+    get response (): Response;
+
+    /**
+     * Returns the *type* of the controller class which the current handler belongs to.
+     */
+    getClass<T = any>(): Type<T>;
+
+    /**
+     * Returns a reference to the handler (method) that will be invoked next in the
+     * request pipeline.
+     */
+    getHandler(): Function;
+
+    /**
+     * Saves the data to the request or socket context.
+     * @param key - The key to save the data under.
+     * @param data - The data to save.
+     */
+    addData<T> (key: string, data: T): void;
+
+    /**
+     * Retrieves the data from the request or socket context.
+     * @param key - The key to retrieve the data from.
+     * @returns The data stored under the key.
+     */
+    getData<T> (key: string): T | null;
 }
