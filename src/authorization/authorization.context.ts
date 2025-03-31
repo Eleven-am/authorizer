@@ -1,4 +1,5 @@
 import { Context } from '@eleven-am/pondsocket-nest';
+import type { PondPresence, PondAssigns, PondEventMap } from '@eleven-am/pondsocket/types';
 import { ExecutionContext, Type } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -16,22 +17,6 @@ export class AuthorizationContext {
         }
     }
 
-    get socketContext (): Context {
-        if (this.#socketContext) {
-            return this.#socketContext;
-        }
-
-        throw new Error('Socket context is not available');
-    }
-
-    get httpContext (): ExecutionContext {
-        if (this.#httpContext) {
-            return this.#httpContext;
-        }
-
-        throw new Error('HTTP context is not available');
-    }
-
     get isSocket (): boolean {
         return Boolean(this.#socketContext);
     }
@@ -40,7 +25,23 @@ export class AuthorizationContext {
         return Boolean(this.#httpContext);
     }
 
-    get request (): Request & Record<string, unknown> {
+    getSocketContext <Path extends string = string, Event extends PondEventMap = PondEventMap, Presence extends PondPresence = PondPresence, Assigns extends PondAssigns = PondAssigns> (): Context<Path, Event, Presence, Assigns> {
+        if (this.#socketContext) {
+            return this.#socketContext as Context<Path, Event, Presence, Assigns>;
+        }
+
+        throw new Error('Socket context is not available');
+    }
+
+    getHttpContext (): ExecutionContext {
+        if (this.#httpContext) {
+            return this.#httpContext;
+        }
+
+        throw new Error('HTTP context is not available');
+    }
+
+    getRequest <DataType = Record<string, unknown>> (): Request & DataType  {
         if (this.#httpContext) {
             return this.#httpContext.switchToHttp().getRequest();
         }
@@ -48,7 +49,7 @@ export class AuthorizationContext {
         throw new Error('HTTP request is not available');
     }
 
-    get response (): Response {
+    getResponse (): Response {
         if (this.#httpContext) {
             return this.#httpContext.switchToHttp().getResponse();
         }

@@ -2,6 +2,7 @@ import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
+import type { PondEventMap, PondPresence, PondAssigns } from '@eleven-am/pondsocket/types';
 import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate, Type } from '@nestjs/common';
 import { Response, Request } from 'express';
 
@@ -152,17 +153,29 @@ export declare class AuthorizationSocketGuard implements CanActivateSocket {
 }
 
 export declare class AuthorizationContext {
-    get socketContext (): Context;
-
-    get httpContext (): ExecutionContext;
-
     get isSocket (): boolean;
 
     get isHttp (): boolean;
 
-    get request (): Request & Record<string, unknown>;
+    /**
+     * @desc Returns the socket context for the current request
+     */
+    getSocketContext <Path extends string = string, Event extends PondEventMap = PondEventMap, Presence extends PondPresence = PondPresence, Assigns extends PondAssigns = PondAssigns> (): Context<Path, Event, Presence, Assigns>;
 
-    get response (): Response;
+    /**
+     * @desc Returns the http context for the current request
+     */
+    getHttpContext (): ExecutionContext;
+
+    /**
+     * @desc Returns the request object for the current request
+     */
+    getRequest <DataType = Record<string, unknown>> (): Request & DataType;
+
+    /**
+     * @desc Returns the response object for the current request
+     */
+    getResponse (): Response;
 
     /**
      * Returns the *type* of the controller class which the current handler belongs to.
