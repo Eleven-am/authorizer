@@ -160,7 +160,7 @@ export declare class AuthorizationContext {
 
     get isHttp (): boolean;
 
-    get request (): Request;
+    get request (): Request & Record<string, unknown>;
 
     get response (): Response;
 
