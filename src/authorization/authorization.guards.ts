@@ -3,7 +3,6 @@ import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/commo
 import { mapTaskEither } from './authorization.constants';
 import { AuthorizationService } from './authorization.service';
 
-
 @Injectable()
 export class AuthorizationHttpGuard implements CanActivate {
     private readonly logger = new Logger(AuthorizationHttpGuard.name);

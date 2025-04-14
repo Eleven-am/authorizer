@@ -22,6 +22,7 @@
     "@eleven-am/fp": "^0.0.20",
     "@eleven-am/pondsocket-nest": "^0.0.105",
     "@golevelup/nestjs-discovery": "^4.0.3",
+    "@nestjs/graphql": "^13.1.0",
     "nestjs-zod": "^4.3.1",
     "uuid": "^11.1.0"
   },

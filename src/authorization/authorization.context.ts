@@ -2,6 +2,7 @@ import { Context } from '@eleven-am/pondsocket-nest';
 import type { PondPresence, PondAssigns, PondEventMap } from '@eleven-am/pondsocket/types';
 import { ExecutionContext, Type } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 
 export class AuthorizationContext {
     readonly #socketContext: Context | null;
@@ -25,6 +26,10 @@ export class AuthorizationContext {
         return Boolean(this.#httpContext);
     }
 
+    get isGraphql (): boolean {
+        return Boolean(this.#httpContext && this.#httpContext.getType<GqlContextType>() === 'graphql');
+    }
+
     getSocketContext <Path extends string = string, Event extends PondEventMap = PondEventMap, Presence extends PondPresence = PondPresence, Assigns extends PondAssigns = PondAssigns> (): Context<Path, Event, Presence, Assigns> {
         if (this.#socketContext) {
             return this.#socketContext as Context<Path, Event, Presence, Assigns>;
@@ -41,7 +46,20 @@ export class AuthorizationContext {
         throw new Error('HTTP context is not available');
     }
 
-    getRequest <DataType = Record<string, unknown>> (): Request & DataType  {
+    getGraphQLContext(): GqlExecutionContext {
+        if (this.isGraphql && this.#httpContext) {
+            return GqlExecutionContext.create(this.#httpContext);
+        }
+
+        throw new Error('GraphQL context is not available');
+    }
+
+    getRequest<DataType = Record<string, unknown>>(): Request & DataType {
+        if (this.isGraphql) {
+            const ctx = this.getGraphQLContext();
+            return ctx.getContext().req;
+        }
+
         if (this.#httpContext) {
             return this.#httpContext.switchToHttp().getRequest();
         }
@@ -87,7 +105,7 @@ export class AuthorizationContext {
      */
     addData<T> (key: string, data: T): void {
         if (this.#httpContext) {
-            this.#httpContext.switchToHttp().getRequest()[key] = data;
+            this.getRequest()[key] = data;
         } else {
             this.#socketContext!.addData(key, data);
         }
@@ -100,8 +118,7 @@ export class AuthorizationContext {
      */
     getData<T> (key: string): T | null {
         if (this.#httpContext) {
-            return this.#httpContext.switchToHttp()
-                .getRequest()[key] ?? null;
+            return (this.getRequest()[key] as T) ?? null;
         }
 
         return this.#socketContext!.getData(key);

@@ -5,6 +5,7 @@ import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket
 import type { PondEventMap, PondPresence, PondAssigns } from '@eleven-am/pondsocket/types';
 import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate, Type } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { GqlExecutionContext } from '@nestjs/graphql';
 
 export declare enum Action {
     Create = 'create',
@@ -157,6 +158,8 @@ export declare class AuthorizationContext {
 
     get isHttp (): boolean;
 
+    get isGraphql (): boolean;
+
     /**
      * @desc Returns the socket context for the current request
      */
@@ -166,6 +169,11 @@ export declare class AuthorizationContext {
      * @desc Returns the http context for the current request
      */
     getHttpContext (): ExecutionContext;
+
+    /**
+     * @desc Returns the GraphQL context for the current request
+     */
+    getGraphQLContext(): GqlExecutionContext;
 
     /**
      * @desc Returns the request object for the current request
