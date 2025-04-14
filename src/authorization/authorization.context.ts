@@ -7,6 +7,7 @@ import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 export class AuthorizationContext {
     readonly #socketContext: Context | null;
     readonly #httpContext: ExecutionContext | null;
+    readonly #data: Record<string, unknown> = {};
 
     constructor (context: ExecutionContext | Context) {
         if (context instanceof Context) {
@@ -114,7 +115,12 @@ export class AuthorizationContext {
      */
     addData<T> (key: string, data: T): void {
         if (this.#httpContext) {
-            this.getRequest()[key] = data;
+            const req = this.getRequest();
+            if (req) {
+                req[key] = data;
+            } else {
+                this.#data[key] = data;
+            }
         } else {
             this.#socketContext!.addData(key, data);
         }
@@ -127,7 +133,12 @@ export class AuthorizationContext {
      */
     getData<T> (key: string): T | null {
         if (this.#httpContext) {
-            return (this.getRequest()[key] as T) ?? null;
+           const req = this.getRequest();
+            if (req && req[key]) {
+                return req[key] as T;
+            }
+
+            return (this.#data[key] as T) ?? null;
         }
 
         return this.#socketContext!.getData(key);
