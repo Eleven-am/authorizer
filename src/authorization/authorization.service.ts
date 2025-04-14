@@ -36,11 +36,12 @@ export class AuthorizationService implements OnModuleInit {
             .chain(({ ability, authorizers }) => TaskEither
                 .of(authorizers)
                 .chainItems((item) => item.authorize(context, ability, rules))
-                .ioSync(() => context.addData<AppAbilityType>(ABILITY_KEY, ability)))
-            .filterItems((result) => result)
-            .filter(
-                (items) => items.length > 0,
-                () => createUnauthorizedError('Unauthorized'),
+                .ioSync(() => context.addData<AppAbilityType>(ABILITY_KEY, ability))
+                .filterItems((item) => item)
+                .filter(
+                    (items) => items.length === authorizers.length,
+                    () => createUnauthorizedError('User is not authorized to access this resource'),
+                )
             )
             .map(() => true)
 
