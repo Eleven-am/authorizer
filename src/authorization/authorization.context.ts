@@ -26,6 +26,10 @@ export class AuthorizationContext {
         return Boolean(this.#httpContext);
     }
 
+    get isNestSocket (): boolean {
+        return Boolean(this.#httpContext && this.#httpContext.getType() === 'ws');
+    }
+
     get isGraphql (): boolean {
         return Boolean(this.#httpContext && this.#httpContext.getType<GqlContextType>() === 'graphql');
     }
@@ -58,6 +62,11 @@ export class AuthorizationContext {
         if (this.isGraphql) {
             const ctx = this.getGraphQLContext();
             return ctx.getContext().req;
+        }
+
+        if (this.isNestSocket) {
+            const ctx = this.getHttpContext();
+            return ctx.switchToWs().getClient();
         }
 
         if (this.#httpContext) {
