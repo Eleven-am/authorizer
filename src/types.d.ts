@@ -209,4 +209,18 @@ export declare class AuthorizationContext {
      * @returns The data stored under the key.
      */
     getData<T> (key: string): T | null;
+
+    /**
+     * Retrieves the params from the request or socket context.
+     * @param key - The key to retrieve the param from.
+     * @returns The param stored under the key.
+     */
+    getParam (key: string): string | null;
+
+    /**
+     * Retrieves the query from the request or socket context.
+     * @param key - The key to retrieve the query from.
+     * @returns The query stored under the key.
+     */
+    getQuery (key: string): string | null;
 }

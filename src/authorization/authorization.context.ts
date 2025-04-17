@@ -143,6 +143,34 @@ export class AuthorizationContext {
 
         return this.#socketContext!.getData(key);
     }
+
+    /**
+     * Retrieves the params from the request or socket context.
+     * @param key - The key to retrieve the param from.
+     * @returns The param stored under the key.
+     */
+    getParam (key: string): string | null {
+        if (this.#httpContext) {
+            const req = this.getRequest();
+            return req.params[key] ?? null;
+        }
+
+        return this.#socketContext!.event?.params[key] ?? null;
+    }
+
+    /**
+     * Retrieves the query from the request or socket context.
+     * @param key - The key to retrieve the query from.
+     * @returns The query stored under the key.
+     */
+    getQuery (key: string): string | string[] | null {
+        if (this.#httpContext) {
+            const req = this.getRequest();
+            return (req.query[key] as string | string[]) ?? null;
+        }
+
+        return this.#socketContext!.event?.query[key] ?? null;
+    }
 }
 
 
