@@ -163,10 +163,10 @@ export class AuthorizationContext {
      * @param key - The key to retrieve the query from.
      * @returns The query stored under the key.
      */
-    getQuery (key: string): string | string[] | null {
+    getQuery (key: string): string | null {
         if (this.#httpContext) {
             const req = this.getRequest();
-            return (req.query[key] as string | string[]) ?? null;
+            return (req.query[key] as string) ?? null;
         }
 
         return this.#socketContext!.event?.query[key] ?? null;
