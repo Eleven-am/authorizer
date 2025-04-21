@@ -78,11 +78,28 @@ function mapFailedToException (error: Failed): HttpException {
     }
 }
 
+function getErrorSource (error: Failed): string {
+    if ((!error.error) || (!(error.error instanceof Error))) {
+        return 'Unknown error';
+    }
+
+    const stackLines = error.error.stack?.split('\n') || [];
+    const sourceLine = stackLines[1] || '';
+    if (!sourceLine) {
+        return 'Unknown error source';
+    }
+
+    const relevantLine = stackLines.find(line => !line.includes('node_modules'));
+
+    return relevantLine || stackLines[0] || 'Unknown error source';
+}
+
 export async function mapTaskEither<T> (task: TaskEither<T>, logger: LoggerService): Promise<T> {
     const result = await task.toResult();
 
     if (hasError(result)) {
         logger.error(result.error.message);
+        logger.error(getErrorSource(result));
         throw mapFailedToException(result);
     }
 
