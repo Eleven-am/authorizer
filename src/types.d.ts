@@ -39,10 +39,6 @@ export interface AuthenticationOptions {
     redisOptions?: RedisOptions;
 }
 
-export interface AsyncMetadata extends Pick<ModuleMetadata, 'imports'> {
-    inject?: any[];
-    useFactory: (...args: any[]) => Promise<AuthenticationOptions> | AuthenticationOptions;
-}
 
 export declare enum Action {
     Create = 'create',

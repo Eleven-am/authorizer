@@ -1,6 +1,6 @@
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
 import { DynamicModule, Provider } from '@nestjs/common';
-import { AsyncMetadata } from '../types';
+import { AuthorizationMetadata } from '../types';
 import { AUTHENTICATION_BACKEND } from './authorization.constants';
 
 import { AuthorizationReflector } from './authorization.reflector';
@@ -13,7 +13,7 @@ export class AuthorizationModule {
         exports,
         inject,
         useFactory,
-    }: AsyncMetadata): DynamicModule {
+    }: AuthorizationMetadata): DynamicModule {
         const provider: Provider = {
             provide: AUTHENTICATION_BACKEND,
             inject,
