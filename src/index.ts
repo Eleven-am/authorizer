@@ -4,3 +4,8 @@ export { sortActions, mapTaskEither } from './authorization/authorization.consta
 export { Authorizer, CanPerform, CurrentAbility, createParamDecorator } from './authorization/authorization.decorators';
 export { Action, HttpExceptionSchema, HttpExceptionDto, PermanentRedirectException, RedirectException, TemporaryRedirectException } from './authorization/authorization.contracts';
 export { AuthorizationHttpGuard, AuthorizationSocketGuard } from './authorization/authorization.guards';
+export { CurrentSession, CurrentToken } from './authentication/authentication.constants';
+export { AuthenticationModule } from './authentication/authentication.module';
+export { AuthenticationService } from './authentication/authentication.service';
+export { auth } from './utils/auth';
+export { setupAuth } from './utils/setupAuth';

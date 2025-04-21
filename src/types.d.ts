@@ -6,6 +6,43 @@ import type { PondEventMap, PondPresence, PondAssigns } from '@eleven-am/pondsoc
 import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate, Type } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { Session } from "better-auth";
+import { PrismaClient } from "@prisma/client";
+import { RedisOptions } from '@eleven-am/pondsocket/types';
+
+interface OAUTH2Config {
+    clientId: string;
+    clientSecret: string;
+}
+
+interface ApplicationConfig {
+    name: string;
+    secret: string;
+    version: string;
+    address: string;
+    description: string;
+    rpId: string;
+    rpName: string;
+}
+
+interface PrismaAdapter {
+    provider: "sqlite" | "cockroachdb" | "mysql" | "postgresql" | "sqlserver" | "mongodb";
+    client: PrismaClient;
+}
+
+export interface AuthenticationOptions {
+    google?: OAUTH2Config;
+    github?: OAUTH2Config;
+    application: ApplicationConfig;
+    notification: NotificationService;
+    database: PrismaAdapter;
+    redisOptions?: RedisOptions;
+}
+
+export interface AsyncMetadata extends Pick<ModuleMetadata, 'imports'> {
+    inject?: any[];
+    useFactory: (...args: any[]) => Promise<AuthenticationOptions> | AuthenticationOptions;
+}
 
 export declare enum Action {
     Create = 'create',
@@ -20,6 +57,11 @@ export interface SubjectTypes {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface User {}
+
+export interface CachedSession {
+    user: User;
+    session: Session
+}
 
 type AppSubject = Subjects<SubjectTypes>;
 
@@ -63,9 +105,32 @@ export interface Authenticator {
     retrieveUser: (context: AuthorizationContext) => TaskEither<User>;
 }
 
-export interface AsyncMetadata extends ModuleMetadata {
+export interface NotificationService {
+    /**
+     * @desc Send a reset password email to the user
+     * @param email The email address of the user
+     * @param url The URL to redirect to after the password is reset
+     * @param token The token to include in the email
+     */
+    sendResetPasswordEmail(email: string, url: string, token: string): Promise<void>;
+
+    /**
+     * @desc Send a verification email to the user
+     * @param email The email address of the user
+     * @param url The URL to redirect to after the email is verified
+     * @param token The token to include in the email
+     */
+    sendVerificationEmail(email: string, url: string, token: string): Promise<void>;
+}
+
+export interface AuthorizationMetadata extends ModuleMetadata {
     inject?: any[];
     useFactory: (...args: any[]) => Promise<Authenticator> | Authenticator;
+}
+
+export interface AuthenticationMetadata extends Pick<ModuleMetadata, 'imports'> {
+    inject?: any[];
+    useFactory: (...args: any[]) => Promise<AuthenticationOptions> | AuthenticationOptions;
 }
 
 export interface Permission<Resource extends AppSubject = AppSubject> {
@@ -75,9 +140,25 @@ export interface Permission<Resource extends AppSubject = AppSubject> {
 }
 
 /**
- * Decorator to retrieve the current user's ability for the current http request
+ * Decorator to retrieve the current user's ability for the current request
  */
 export declare const CurrentAbility: {
+    WS: () => ParameterDecorator;
+    HTTP: () => ParameterDecorator;
+};
+
+/**
+ * Decorator to retrieve the current user's session for the current request
+ */
+export declare const CurrentSession: {
+    WS: () => ParameterDecorator;
+    HTTP: () => ParameterDecorator;
+}
+
+/**
+ * Decorator to retrieve the current user's session for the current request
+ */
+export declare const CurrentToken: {
     WS: () => ParameterDecorator;
     HTTP: () => ParameterDecorator;
 };
@@ -112,8 +193,23 @@ export declare function sortActions(actions: Action[]): Action[];
 export function mapTaskEither<DataType>(task: TaskEither<DataType>, logger: LoggerService): Promise<DataType>;
 
 export declare class AuthorizationModule {
-    static forRootAsync(metadata: AsyncMetadata): DynamicModule;
+    static forRootAsync(metadata: AuthorizationMetadata): DynamicModule;
 }
+
+export declare class AuthenticationModule {
+    static forRootAsync(metadata: AuthenticationMetadata): DynamicModule;
+}
+
+/**
+ * Sets up the Nest application with the better-auth authentication module
+ * @param AppModule The application module to setup
+ */
+export async function setupAuth(AppModule: Type): Promise<NestExpressApplication<Server<typeof IncomingMessage, typeof ServerResponse>>>
+
+/**
+ * A dummy function to be used to create a better-auth client useful for generating the prisma schema
+ */
+export function auth(): {handler: (request: Request) => Promise<Response>, api: InferAPI}
 
 export declare class RedirectException extends HttpException {
     constructor(url: string, message: string, status: number);
