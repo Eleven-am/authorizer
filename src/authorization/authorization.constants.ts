@@ -83,13 +83,7 @@ function getErrorSource (error: Failed): string {
         return 'Unknown error';
     }
 
-    const stackLines = error.error.stack?.split('\n') || [];
-    const relevantLine = stackLines.filter(line => !line.includes('node_modules'));
-    if (relevantLine.length === 0) {
-        return 'Unknown error source';
-    }
-
-    return relevantLine.slice(1, 3).map(line => line.trim()).join('\n');
+    return error.error.stack?.split('\n').map((line) => line.trim()).join('\n') ?? 'Unknown error';
 }
 
 export async function mapTaskEither<T> (task: TaskEither<T>, logger: LoggerService): Promise<T> {
