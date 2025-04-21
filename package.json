@@ -1,6 +1,6 @@
 {
   "name": "@eleven-am/authorizer",
-  "version": "0.0.81",
+  "version": "0.0.82",
   "publishConfig": {
     "access": "public"
   },
