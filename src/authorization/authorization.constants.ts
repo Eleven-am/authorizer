@@ -84,14 +84,12 @@ function getErrorSource (error: Failed): string {
     }
 
     const stackLines = error.error.stack?.split('\n') || [];
-    const sourceLine = stackLines[1] || '';
-    if (!sourceLine) {
+    const relevantLine = stackLines.filter(line => !line.includes('node_modules'));
+    if (relevantLine.length === 0) {
         return 'Unknown error source';
     }
 
-    const relevantLine = stackLines.find(line => !line.includes('node_modules'));
-
-    return relevantLine || stackLines[0] || 'Unknown error source';
+    return relevantLine.slice(1, 3).map(line => line.trim()).join('\n');
 }
 
 export async function mapTaskEither<T> (task: TaskEither<T>, logger: LoggerService): Promise<T> {
