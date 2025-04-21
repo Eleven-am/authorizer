@@ -3,8 +3,9 @@ import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AuthenticationService } from "../authentication/authentication.service";
 import { join } from "path";
-import cookieParser from 'cookie-parser';
-import express, { json, urlencoded } from "express";
+import * as cookieParser from 'cookie-parser';
+import * as express from "express";
+import { json, urlencoded } from "express";
 
 export async function setupAuth (AppModule: Type) {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);

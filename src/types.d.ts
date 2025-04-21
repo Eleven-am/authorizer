@@ -39,7 +39,6 @@ export interface AuthenticationOptions {
     redisOptions?: RedisOptions;
 }
 
-
 export declare enum Action {
     Create = 'create',
     Read = 'read',
