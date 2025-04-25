@@ -204,7 +204,7 @@ export async function setupAuth(AppModule: Type): Promise<NestExpressApplication
 /**
  * A dummy function to be used to create a better-auth client useful for generating the prisma schema
  */
-export function auth(): {handler: (request: Request) => Promise<Response>, api: InferAPI}
+export function betterAuth(): {handler: (request: Request) => Promise<Response>, api: InferAPI}
 
 export declare class RedirectException extends HttpException {
     constructor(url: string, message: string, status: number);

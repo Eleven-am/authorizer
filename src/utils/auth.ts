@@ -3,6 +3,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import {
     admin,
+    jwt,
     openAPI,
     username,
 } from 'better-auth/plugins';
@@ -44,6 +45,7 @@ export function auth () {
             username(),
             openAPI(),
             admin(),
+            jwt(),
         ],
     })
 }

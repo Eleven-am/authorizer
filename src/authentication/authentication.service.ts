@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
-import { admin, openAPI, username } from 'better-auth/plugins';
+import { admin, openAPI, username, jwt } from 'better-auth/plugins';
 import { passkey } from 'better-auth/plugins/passkey';
 import { Request } from 'express';
 
@@ -123,6 +123,7 @@ export class AuthenticationService {
                 username(),
                 openAPI(),
                 admin(),
+                jwt(),
             ],
         });
     }
