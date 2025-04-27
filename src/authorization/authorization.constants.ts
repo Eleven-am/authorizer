@@ -78,20 +78,11 @@ function mapFailedToException (error: Failed): HttpException {
     }
 }
 
-function getErrorSource (error: Failed): string {
-    if ((!error.error) || (!(error.error instanceof Error))) {
-        return 'Unknown error';
-    }
-
-    return error.error.stack?.split('\n').map((line) => line.trim()).join('\n') ?? 'Unknown error';
-}
-
 export async function mapTaskEither<T> (task: TaskEither<T>, logger: LoggerService): Promise<T> {
     const result = await task.toResult();
 
     if (hasError(result)) {
         logger.error(result.error.message);
-        logger.error(getErrorSource(result));
         throw mapFailedToException(result);
     }
 
