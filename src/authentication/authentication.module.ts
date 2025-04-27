@@ -5,9 +5,7 @@ import {DiscoveryModule} from "@golevelup/nestjs-discovery";
 import {AuthorizationService} from "../authorization/authorization.service";
 import {AuthorizationReflector} from "../authorization/authorization.reflector";
 import {AuthenticationService} from "./authentication.service";
-import {APP_GUARD, APP_INTERCEPTOR} from "@nestjs/core";
-import {AuthenticationInterceptor} from "./authentication.interceptor";
-import {AuthorizationHttpGuard, AuthorizationSocketGuard} from "../authorization/authorization.guards";
+import {AuthorizationSocketGuard} from "../authorization/authorization.guards";
 import {Authenticator} from "../types";
 import {PondSocketModule} from "@eleven-am/pondsocket-nest";
 
@@ -26,17 +24,14 @@ export class AuthenticationModule {
             },
         }
 
-        const httpGuard: Provider = { provide: APP_GUARD, useClass: AuthorizationHttpGuard };
-        const interceptor: Provider = { provide: APP_INTERCEPTOR, useClass: AuthenticationInterceptor };
-
         const authorizationProvider: Provider = {
-           provide: AUTHENTICATION_BACKEND,
-           inject: [AuthenticationService],
-           useFactory: (authenticationService: AuthenticationService): Authenticator => ({
-               allowNoRulesAccess: (context) => authenticationService.allowNoRulesAccess(context),
-               retrieveUser: (context) => authenticationService.getSession(context),
-           })
-       }
+            provide: AUTHENTICATION_BACKEND,
+            inject: [AuthenticationService],
+            useFactory: (authenticationService: AuthenticationService): Authenticator => ({
+                allowNoRulesAccess: (context) => authenticationService.allowNoRulesAccess(context),
+                retrieveUser: (context) => authenticationService.getSession(context),
+            })
+        }
 
         return {
             global: true,
@@ -55,8 +50,6 @@ export class AuthenticationModule {
                 authorizationProvider,
                 AuthorizationReflector,
                 AuthorizationService,
-                httpGuard,
-                interceptor
             ],
             exports: [AuthenticationService, AuthorizationService],
         };

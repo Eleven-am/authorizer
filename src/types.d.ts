@@ -3,7 +3,16 @@ import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
 import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
 import type { PondEventMap, PondPresence, PondAssigns } from '@eleven-am/pondsocket/types';
-import { ExecutionContext, DynamicModule, ModuleMetadata, LoggerService, CanActivate, Type } from '@nestjs/common';
+import {
+    ExecutionContext,
+    DynamicModule,
+    ModuleMetadata,
+    LoggerService,
+    CanActivate,
+    Type,
+    NestInterceptor,
+    CallHandler,
+} from '@nestjs/common';
 import { Response, Request } from 'express';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Session } from "better-auth";
@@ -242,6 +251,10 @@ export declare class AuthorizationHttpGuard implements CanActivate {
 
 export declare class AuthorizationSocketGuard implements CanActivateSocket {
     canActivate(context: Context): Promise<boolean>;
+}
+
+export declare class AuthenticationInterceptor implements NestInterceptor {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
 }
 
 export declare class AuthorizationContext {

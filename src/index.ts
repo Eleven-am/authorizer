@@ -7,5 +7,6 @@ export { AuthorizationHttpGuard, AuthorizationSocketGuard } from './authorizatio
 export { CurrentSession, CurrentToken, filterNull } from './authentication/authentication.constants';
 export { AuthenticationModule } from './authentication/authentication.module';
 export { AuthenticationService } from './authentication/authentication.service';
+export { AuthenticationInterceptor } from './authentication/authentication.interceptor';
 export { auth as betterAuth } from './utils/auth';
 export { setupAuth } from './utils/setupAuth';

@@ -2,6 +2,7 @@ import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { mapTaskEither } from './authorization.constants';
 import { AuthorizationService } from './authorization.service';
+import {GqlExecutionContext} from "@nestjs/graphql";
 
 @Injectable()
 export class AuthorizationHttpGuard implements CanActivate {
@@ -10,6 +11,8 @@ export class AuthorizationHttpGuard implements CanActivate {
     constructor (protected readonly authorizationService: AuthorizationService) {}
 
     canActivate (context: ExecutionContext) {
+        const ctx = GqlExecutionContext.create(context);
+        const ctx2= ctx.getContext();
         const task = this.authorizationService.checkAction(context);
 
         return mapTaskEither(task, this.logger);
