@@ -202,6 +202,8 @@ export declare class AuthorizationModule {
 
 export declare class AuthenticationModule {
     static forRootAsync(metadata: AuthenticationMetadata): DynamicModule;
+
+    static forRootWithAuthorization(metadata: AuthenticationMetadata): DynamicModule;
 }
 
 /**
