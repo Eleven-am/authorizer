@@ -11,8 +11,6 @@ export class AuthorizationHttpGuard implements CanActivate {
     constructor (protected readonly authorizationService: AuthorizationService) {}
 
     canActivate (context: ExecutionContext) {
-        const ctx = GqlExecutionContext.create(context);
-        const ctx2= ctx.getContext();
         const task = this.authorizationService.checkAction(context);
 
         return mapTaskEither(task, this.logger);

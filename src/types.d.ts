@@ -328,3 +328,6 @@ export declare class AuthorizationContext {
      */
     getQuery (key: string): string | null;
 }
+
+export declare const authenticationBackend: AuthorizationMetadata;
+
