@@ -20,7 +20,7 @@
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
     "@eleven-am/fp": "^0.0.20",
-    "@eleven-am/pondsocket-nest": "^0.0.111",
+    "@eleven-am/pondsocket-nest": "^0.0.112",
     "@golevelup/nestjs-discovery": "^4.0.3",
     "@nestjs/graphql": "^13.1.0",
     "@nestjs/platform-express": "^11.1.0",
