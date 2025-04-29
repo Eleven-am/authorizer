@@ -11,7 +11,6 @@ import { AuthenticationOptions } from './authentication.contracts';
 import { CURRENT_SESSION_KEY, CURRENT_TOKEN_KEY } from './authentication.constants';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { AuthorizationContext } from "../types";
-import {RedisOptions} from "@eleven-am/pondsocket/types";
 
 export class AuthenticationService {
     private readonly authClient: ReturnType<typeof this.buildAuth>;
@@ -21,10 +20,6 @@ export class AuthenticationService {
         private readonly option: AuthenticationOptions,
     ) {
         this.authClient = this.buildAuth();
-    }
-
-    getRedisOptions() {
-        return this.option.redisOptions as RedisOptions;
     }
 
     getSession(ctx: AuthorizationContext) {

@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { RedisOptions } from '@eleven-am/pondsocket/types';
 import { ModuleMetadata } from "@nestjs/common";
 
 interface OAUTH2Config {
@@ -33,7 +32,6 @@ export interface AuthenticationOptions {
     application: ApplicationConfig;
     notification: NotificationService;
     database: PrismaAdapter;
-    redisOptions?: RedisOptions;
 }
 
 export interface AsyncMetadata extends Pick<ModuleMetadata, 'imports'> {
