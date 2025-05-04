@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
-import { admin, openAPI, username, jwt } from 'better-auth/plugins';
+import { admin, openAPI, username, jwt, phoneNumber } from 'better-auth/plugins';
 import { passkey } from 'better-auth/plugins/passkey';
 import { Request } from 'express';
 
@@ -87,7 +87,7 @@ export class AuthenticationService {
     private buildAuth() {
         return betterAuth({
             logger: this.logger,
-            trustedOrigins: ['http://localhost:5173'],
+            trustedOrigins: this.option.trustedOrigins,
             appName: this.option.application.name,
             baseURL: this.option.application.address,
             secret: this.option.application.secret,
@@ -115,6 +115,7 @@ export class AuthenticationService {
                     rpID: this.option.application.rpId,
                     rpName: this.option.application.rpName,
                 }),
+                phoneNumber(),
                 username(),
                 openAPI(),
                 admin(),

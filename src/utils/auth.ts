@@ -6,6 +6,7 @@ import {
     jwt,
     openAPI,
     username,
+    phoneNumber,
 } from 'better-auth/plugins';
 import { passkey } from 'better-auth/plugins/passkey';
 
@@ -42,6 +43,7 @@ export function auth () {
                 rpID: '',
                 rpName: '',
             }),
+            phoneNumber(),
             username(),
             openAPI(),
             admin(),

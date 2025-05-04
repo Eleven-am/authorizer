@@ -32,6 +32,7 @@ export interface AuthenticationOptions {
     application: ApplicationConfig;
     notification: NotificationService;
     database: PrismaAdapter;
+    trustedOrigins: string[];
 }
 
 export interface AsyncMetadata extends Pick<ModuleMetadata, 'imports'> {
