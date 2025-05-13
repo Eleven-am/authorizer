@@ -34,4 +34,4 @@ export const authenticationBackend: AuthorizationMetadata = {
         allowNoRulesAccess: (context) => authenticationService.allowNoRulesAccess(context),
         retrieveUser: (context) => authenticationService.getSession(context),
     })
-}
+};

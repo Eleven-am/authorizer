@@ -23,10 +23,10 @@ export class AuthenticationModule {
 
         return {
             global: true,
-            module: AuthenticationModule,
             imports: imports,
-            providers: [authenticationProvider],
+            module: AuthenticationModule,
             exports: [AuthenticationService],
+            providers: [authenticationProvider],
         };
     }
 

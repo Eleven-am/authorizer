@@ -36,7 +36,7 @@ export class AuthenticationService {
             ])
             .mapError(() => createUnauthorizedError('User is not authenticated'))
             .ioSync((session) => ctx.addData(CURRENT_SESSION_KEY, session))
-            .ioSync((session) => ctx.addData<string>(CURRENT_TOKEN_KEY, session.session.token))
+            .ioSync((session) => ctx.addData<string>(CURRENT_TOKEN_KEY, (session.session as any).token))
             .map((session) => session.user);
     }
 
@@ -137,11 +137,9 @@ export class AuthenticationService {
             .tryCatch(
                 () => this.authClient.api.getSession({
                     headers: fromNodeHeaders(req.headers),
-                }) as Promise<any>,
+                }),
                 'Failed to get session',
             )
             .nonNullable('Failed to get session');
     }
 }
-
-
