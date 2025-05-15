@@ -8,9 +8,13 @@ import {
     NotFoundException,
     InternalServerErrorException,
     LoggerService,
+    ExceptionFilter,
+    ArgumentsHost,
+    Catch,
 } from '@nestjs/common';
+import { Response } from 'express';
 
-import { Action, TemporaryRedirectException, PermanentRedirectException } from './authorization.contracts';
+import { Action, TemporaryRedirectException, PermanentRedirectException, RedirectException } from './authorization.contracts';
 
 export const CAN_PERFORM_KEY = Symbol('CAN_PERFORM_KEY');
 export const ABILITY_KEY = 'ABILITY_KEY';
@@ -87,4 +91,14 @@ export async function mapTaskEither<T> (task: TaskEither<T>, logger: LoggerServi
     }
 
     return result.data;
+}
+
+@Catch(RedirectException)
+export class RedirectFilter implements ExceptionFilter {
+    public catch (exception: RedirectException, host: ArgumentsHost) {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse<Response>();
+
+        return exception.handle(response);
+    }
 }

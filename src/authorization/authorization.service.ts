@@ -36,16 +36,17 @@ export class AuthorizationService implements OnModuleInit {
             .chain(({ ability, authorizers }) => TaskEither
                 .of(authorizers)
                 .chainItems((item) => item.authorize(context, ability, rules))
-                .ioSync(() => context.addData<AppAbilityType>(ABILITY_KEY, ability))
-                .filterItems((item) => item)
-                .filter(
-                    (items) => items.length === authorizers.length,
-                    () => createUnauthorizedError('User is not authorized to access this resource'),
-                )
+                .ioSync(() => context.addData(ABILITY_KEY, ability))
+            )
+            .filterItems((item) => !item)
+            .filter(
+                (items) => Boolean(items.length),
+                () => createUnauthorizedError('User is not authorized to access this resource'),
             )
             .map(() => true)
 
-        return this.authenticator.retrieveUser(context).orNull()
+        return this.authenticator
+            .retrieveUser(context).orNull()
             .matchTask([
                 {
                     predicate: (user) => Boolean(user),
@@ -56,7 +57,7 @@ export class AuthorizationService implements OnModuleInit {
                     run: () => this.authenticator.allowNoRulesAccess(context),
                 }
             ])
-            .mapError(() => createUnauthorizedError('User is not authenticated'))
+            .mapError(() => createUnauthorizedError('User is not authenticated'));
     }
 
     private getRules (context: AuthorizationContext) {

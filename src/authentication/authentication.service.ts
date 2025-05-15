@@ -34,7 +34,6 @@ export class AuthenticationService {
                     run: (ctx) => this.getSessionFromRequest(ctx.getRequest()),
                 },
             ])
-            .mapError(() => createUnauthorizedError('User is not authenticated'))
             .ioSync((session) => ctx.addData(CURRENT_SESSION_KEY, session))
             .ioSync((session) => ctx.addData<string>(CURRENT_TOKEN_KEY, (session.session as any).token))
             .map((session) => session.user);

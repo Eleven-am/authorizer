@@ -12,6 +12,8 @@ import {
     Type,
     NestInterceptor,
     CallHandler,
+    ExceptionFilter,
+    ArgumentsHost,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { GqlExecutionContext } from '@nestjs/graphql';
@@ -257,6 +259,10 @@ export declare class AuthorizationSocketGuard implements CanActivateSocket {
 
 export declare class AuthenticationInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
+}
+
+export declare class RedirectFilter implements ExceptionFilter {
+    catch(exception: RedirectException, host: ArgumentsHost): void;
 }
 
 export declare class AuthorizationContext {
