@@ -20,11 +20,11 @@
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
     "@eleven-am/fp": "^0.0.20",
-    "@eleven-am/pondsocket-nest": "^0.0.114",
+    "@eleven-am/pondsocket-nest": "^0.0.115",
     "@golevelup/nestjs-discovery": "^5.0.0",
     "@nestjs/graphql": "^13.1.0",
     "@nestjs/platform-express": "^11.1.1",
-    "better-auth": "^1.2.7",
+    "better-auth": "^1.2.8",
     "cookie-parser": "^1.4.7",
     "nestjs-zod": "^4.3.1",
     "uuid": "^11.1.0"
