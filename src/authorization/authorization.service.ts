@@ -40,7 +40,7 @@ export class AuthorizationService implements OnModuleInit {
             )
             .filterItems((item) => !item)
             .filter(
-                (items) => Boolean(items.length),
+                (items) => !Boolean(items.length),
                 () => createUnauthorizedError('User is not authorized to access this resource'),
             )
             .map(() => true)
