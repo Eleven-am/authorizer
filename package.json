@@ -19,7 +19,7 @@
   "dependencies": {
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
-    "@eleven-am/fp": "^0.0.23",
+    "@eleven-am/fp": "^0.0.24",
     "@eleven-am/pondsocket-nest": "^0.0.115",
     "@golevelup/nestjs-discovery": "^5.0.0",
     "@nestjs/graphql": "^13.1.0",
