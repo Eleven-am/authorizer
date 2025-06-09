@@ -17,20 +17,26 @@
     "pipeline": "npm run build && npm run push"
   },
   "dependencies": {
-    "@casl/ability": "^6.7.3",
-    "@casl/prisma": "^1.5.1",
-    "nestjs-zod": "^4.3.1"
   },
   "peerDependencies": {
+    "@casl/ability": "^6.7.3",
+    "@casl/prisma": "^1.5.1",
     "@eleven-am/fp": "^0.0.35",
     "@eleven-am/pondsocket-nest": "^0.0.125",
     "@golevelup/nestjs-discovery": "^5.0.0",
     "@nestjs/common": "^11.1.3",
     "@nestjs/core": "^11.1.3",
     "@nestjs/graphql": "^13.1.0",
-    "@nestjs/platform-express": "^11.1.3"
+    "@nestjs/platform-express": "^11.1.3",
+    "nestjs-zod": "^4.3.1"
   },
   "peerDependenciesMeta": {
+    "@casl/ability": {
+      "optional": false
+    },
+    "@casl/prisma": {
+      "optional": false
+    },
     "@eleven-am/fp": {
       "optional": false
     },
@@ -50,6 +56,9 @@
       "optional": false
     },
     "@nestjs/platform-express": {
+      "optional": false
+    },
+    "nestjs-zod": {
       "optional": false
     }
   },
