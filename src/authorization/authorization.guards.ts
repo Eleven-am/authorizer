@@ -1,8 +1,8 @@
 import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+
 import { mapTaskEither } from './authorization.constants';
 import { AuthorizationService } from './authorization.service';
-import {GqlExecutionContext} from "@nestjs/graphql";
 
 @Injectable()
 export class AuthorizationHttpGuard implements CanActivate {

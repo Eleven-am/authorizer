@@ -1,12 +1,14 @@
-import { Context } from '@eleven-am/pondsocket-nest';
 import type { PondPresence, PondAssigns, PondEventMap } from '@eleven-am/pondsocket/types';
+import { Context } from '@eleven-am/pondsocket-nest';
 import { ExecutionContext, Type } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
+import { Request, Response } from 'express';
 
 export class AuthorizationContext {
     readonly #socketContext: Context | null;
+
     readonly #httpContext: ExecutionContext | null;
+
     readonly #data: Record<string, unknown> = {};
 
     constructor (context: ExecutionContext | Context) {
@@ -51,7 +53,7 @@ export class AuthorizationContext {
         throw new Error('HTTP context is not available');
     }
 
-    getGraphQLContext(): GqlExecutionContext {
+    getGraphQLContext (): GqlExecutionContext {
         if (this.isGraphql && this.#httpContext) {
             return GqlExecutionContext.create(this.#httpContext);
         }
@@ -59,15 +61,17 @@ export class AuthorizationContext {
         throw new Error('GraphQL context is not available');
     }
 
-    getRequest<DataType = Record<string, unknown>>(): Request & DataType {
-        if (this.isGraphql) {
-            const ctx = this.getGraphQLContext();
-            return ctx.getContext().req;
-        }
-
+    getRequest<DataType = Record<string, unknown>> (): Request & DataType {
         if (this.isNestSocket) {
             const ctx = this.getHttpContext();
+
             return ctx.switchToWs().getClient();
+        }
+
+        if (this.isGraphql) {
+            const ctx = this.getGraphQLContext();
+
+            return ctx.getContext().req;
         }
 
         if (this.#httpContext) {
@@ -88,7 +92,7 @@ export class AuthorizationContext {
     /**
      * Returns the *type* of the controller class which the current handler belongs to.
      */
-    getClass<T = any>(): Type<T> {
+    getClass<T = any> (): Type<T> {
         if (this.#httpContext) {
             return this.#httpContext.getClass();
         }
@@ -100,7 +104,7 @@ export class AuthorizationContext {
      * Returns a reference to the handler (method) that will be invoked next in the
      * request pipeline.
      */
-    getHandler(): Function {
+    getHandler (): Function {
         if (this.#httpContext) {
             return this.#httpContext.getHandler();
         }
@@ -116,6 +120,7 @@ export class AuthorizationContext {
     addData<T> (key: string, data: T): void {
         if (this.#httpContext) {
             const req = this.getRequest();
+
             if (req) {
                 req[key] = data;
             } else {
@@ -133,7 +138,8 @@ export class AuthorizationContext {
      */
     getData<T> (key: string): T | null {
         if (this.#httpContext) {
-           const req = this.getRequest();
+            const req = this.getRequest();
+
             if (req && req[key]) {
                 return req[key] as T;
             }
@@ -152,6 +158,8 @@ export class AuthorizationContext {
     getParam (key: string): string | null {
         if (this.#httpContext) {
             const req = this.getRequest();
+
+
             return req.params[key] ?? null;
         }
 
@@ -166,6 +174,8 @@ export class AuthorizationContext {
     getQuery (key: string): string | null {
         if (this.#httpContext) {
             const req = this.getRequest();
+
+
             return (req.query[key] as string) ?? null;
         }
 
