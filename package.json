@@ -1,6 +1,6 @@
 {
   "name": "@eleven-am/authorizer",
-  "version": "0.0.111",
+  "version": "0.0.112",
   "publishConfig": {
     "access": "public"
   },
@@ -16,8 +16,7 @@
     "push": "npm version patch && npm run copy && cd dist && npm publish && cd ..",
     "pipeline": "npm run build && npm run push"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "peerDependencies": {
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
