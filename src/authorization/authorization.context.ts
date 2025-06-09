@@ -34,7 +34,11 @@ export class AuthorizationContext {
     }
 
     get isGraphql (): boolean {
-        return Boolean(this.#httpContext && this.#httpContext.getType<GqlContextType>() === 'graphql');
+        if (!this.#httpContext) {
+            return false;
+        }
+
+        return this.#httpContext.getType<GqlContextType>() === 'graphql';
     }
 
     getSocketContext <Path extends string = string, Event extends PondEventMap = PondEventMap, Presence extends PondPresence = PondPresence, Assigns extends PondAssigns = PondAssigns> (): Context<Path, Event, Presence, Assigns> {

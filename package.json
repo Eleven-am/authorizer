@@ -19,10 +19,10 @@
   "dependencies": {
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
-    "@eleven-am/fp": "^0.0.35",
     "nestjs-zod": "^4.3.1"
   },
   "peerDependencies": {
+    "@eleven-am/fp": "^0.0.35",
     "@eleven-am/pondsocket-nest": "^0.0.125",
     "@golevelup/nestjs-discovery": "^5.0.0",
     "@nestjs/common": "^11.1.3",
@@ -31,6 +31,9 @@
     "@nestjs/platform-express": "^11.1.3"
   },
   "peerDependenciesMeta": {
+    "@eleven-am/fp": {
+      "optional": false
+    },
     "@eleven-am/pondsocket-nest": {
       "optional": false
     },
@@ -44,10 +47,10 @@
       "optional": false
     },
     "@nestjs/graphql": {
-      "optional": true
+      "optional": false
     },
     "@nestjs/platform-express": {
-      "optional": true
+      "optional": false
     }
   },
   "devDependencies": {
