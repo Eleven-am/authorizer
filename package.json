@@ -20,14 +20,35 @@
     "@casl/ability": "^6.7.3",
     "@casl/prisma": "^1.5.1",
     "@eleven-am/fp": "^0.0.35",
-    "@eleven-am/pondsocket-nest": "^0.0.122",
+    "nestjs-zod": "^4.3.1"
+  },
+  "peerDependencies": {
+    "@eleven-am/pondsocket-nest": "^0.0.125",
     "@golevelup/nestjs-discovery": "^5.0.0",
+    "@nestjs/common": "^11.1.3",
+    "@nestjs/core": "^11.1.3",
     "@nestjs/graphql": "^13.1.0",
-    "@nestjs/platform-express": "^11.1.3",
-    "better-auth": "^1.2.8",
-    "cookie-parser": "^1.4.7",
-    "nestjs-zod": "^4.3.1",
-    "uuid": "^11.1.0"
+    "@nestjs/platform-express": "^11.1.3"
+  },
+  "peerDependenciesMeta": {
+    "@eleven-am/pondsocket-nest": {
+      "optional": false
+    },
+    "@golevelup/nestjs-discovery": {
+      "optional": false
+    },
+    "@nestjs/common": {
+      "optional": false
+    },
+    "@nestjs/core": {
+      "optional": false
+    },
+    "@nestjs/graphql": {
+      "optional": true
+    },
+    "@nestjs/platform-express": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.3",
