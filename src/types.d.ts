@@ -208,7 +208,7 @@ export declare class AuthorizationSocketGuard implements CanActivateSocket {
     canActivate(context: Context): Promise<boolean>;
 }
 
-export declare class AuthenticationInterceptor implements NestInterceptor {
+export declare class AuthorizationInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any>;
 }
 
