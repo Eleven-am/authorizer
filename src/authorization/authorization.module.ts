@@ -1,8 +1,8 @@
 import { DiscoveryModule } from '@golevelup/nestjs-discovery';
 import { DynamicModule, Provider } from '@nestjs/common';
+
 import { AuthorizationMetadata } from '../types';
 import { AUTHENTICATION_BACKEND } from './authorization.constants';
-
 import { AuthorizationReflector } from './authorization.reflector';
 import { AuthorizationService } from './authorization.service';
 

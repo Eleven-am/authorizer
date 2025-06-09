@@ -4,8 +4,8 @@ import { TaskEither, createUnauthorizedError } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import { Injectable, OnModuleInit, ExecutionContext, ForbiddenException, Inject } from '@nestjs/common';
-import { Authenticator } from '../types';
 
+import { Authenticator } from '../types';
 import { AUTHORIZER_KEY, CAN_PERFORM_KEY, ABILITY_KEY, AUTHENTICATION_BACKEND } from './authorization.constants';
 import { AuthorizationContext } from './authorization.context';
 import { WillAuthorize, User, Permission, AppAbilityType } from './authorization.contracts';
@@ -31,19 +31,18 @@ export class AuthorizationService implements OnModuleInit {
         const context = new AuthorizationContext(ctx);
         const rules = this.getRules(context);
 
-        const action = (user: User) =>  TaskEither.of(user)
+        const action = (user: User) => TaskEither.of(user)
             .map((user) => this.defineAbilityFor(user, rules))
             .chain(({ ability, authorizers }) => TaskEither
                 .of(authorizers)
                 .chainItems((item) => item.authorize(context, ability, rules))
-                .ioSync(() => context.addData(ABILITY_KEY, ability))
-            )
+                .ioSync(() => context.addData(ABILITY_KEY, ability)))
             .filterItems((item) => !item)
             .filter(
-                (items) => !Boolean(items.length),
+                (items) => !items.length,
                 () => createUnauthorizedError('User is not authorized to access this resource'),
             )
-            .map(() => true)
+            .map(() => true);
 
         return this.authenticator
             .retrieveUser(context).orNull()
@@ -55,7 +54,7 @@ export class AuthorizationService implements OnModuleInit {
                 {
                     predicate: () => rules.length === 0,
                     run: () => this.authenticator.allowNoRulesAccess(context),
-                }
+                },
             ])
             .mapError(() => createUnauthorizedError('User is not authenticated'));
     }

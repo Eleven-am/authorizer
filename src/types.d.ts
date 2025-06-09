@@ -1,8 +1,8 @@
 import { PureAbility, AbilityBuilder } from '@casl/ability';
 import { Subjects, PrismaQuery } from '@casl/prisma';
 import { TaskEither } from '@eleven-am/fp';
-import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
 import type { PondEventMap, PondPresence, PondAssigns } from '@eleven-am/pondsocket/types';
+import { Context, CanActivate as CanActivateSocket } from '@eleven-am/pondsocket-nest';
 import {
     ExecutionContext,
     DynamicModule,
@@ -15,40 +15,8 @@ import {
     ExceptionFilter,
     ArgumentsHost,
 } from '@nestjs/common';
-import { Response, Request } from 'express';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { Session } from "better-auth";
-import { PrismaClient } from "@prisma/client";
-import { RedisOptions } from '@eleven-am/pondsocket/types';
-
-interface OAUTH2Config {
-    clientId: string;
-    clientSecret: string;
-}
-
-interface ApplicationConfig {
-    name: string;
-    secret: string;
-    version: string;
-    address: string;
-    description: string;
-    rpId: string;
-    rpName: string;
-}
-
-interface PrismaAdapter {
-    provider: "sqlite" | "cockroachdb" | "mysql" | "postgresql" | "sqlserver" | "mongodb";
-    client: PrismaClient;
-}
-
-export interface AuthenticationOptions {
-    google?: OAUTH2Config;
-    github?: OAUTH2Config;
-    application: ApplicationConfig;
-    notification: NotificationService;
-    database: PrismaAdapter;
-    redisOptions?: RedisOptions;
-}
+import { Response, Request } from 'express';
 
 export declare enum Action {
     Create = 'create',
@@ -63,11 +31,6 @@ export interface SubjectTypes {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface User {}
-
-export interface CachedSession {
-    user: User;
-    session: Session
-}
 
 type AppSubject = Subjects<SubjectTypes>;
 
@@ -98,6 +61,7 @@ export interface WillAuthorize {
 }
 
 export interface Authenticator {
+
     /**
      * Allow the handling of requests with no rules
      * @param context The context of the request
@@ -112,6 +76,7 @@ export interface Authenticator {
 }
 
 export interface NotificationService {
+
     /**
      * @desc Send a reset password email to the user
      * @param email The email address of the user
@@ -134,11 +99,6 @@ export interface AuthorizationMetadata extends ModuleMetadata {
     useFactory: (...args: any[]) => Promise<Authenticator> | Authenticator;
 }
 
-export interface AuthenticationMetadata extends Pick<ModuleMetadata, 'imports'> {
-    inject?: any[];
-    useFactory: (...args: any[]) => Promise<AuthenticationOptions> | AuthenticationOptions;
-}
-
 export interface Permission<Resource extends AppSubject = AppSubject> {
     action: Action;
     resource: Resource;
@@ -159,7 +119,7 @@ export declare const CurrentAbility: {
 export declare const CurrentSession: {
     WS: () => ParameterDecorator;
     HTTP: () => ParameterDecorator;
-}
+};
 
 /**
  * Decorator to retrieve the current user's session for the current request
@@ -169,6 +129,10 @@ export declare const CurrentToken: {
     HTTP: () => ParameterDecorator;
 };
 
+/**
+ * A function to create a parameter decorator that retrieves data from the context
+ * @param mapper A function that maps the context to the desired output type
+ */
 export function createParamDecorator<T>(mapper: ContextMapper<T>): {
     WS: () => ParameterDecorator;
     HTTP: () => ParameterDecorator;
@@ -202,23 +166,6 @@ export declare class AuthorizationModule {
     static forRootAsync(metadata: AuthorizationMetadata): DynamicModule;
 }
 
-export declare class AuthenticationModule {
-    static forRootAsync(metadata: AuthenticationMetadata): DynamicModule;
-
-    static forRootWithAuthorization(metadata: AuthenticationMetadata): DynamicModule;
-}
-
-/**
- * Sets up the Nest application with the better-auth authentication module
- * @param AppModule The application module to setup
- */
-export async function setupAuth(AppModule: Type): Promise<NestExpressApplication<Server<typeof IncomingMessage, typeof ServerResponse>>>
-
-/**
- * A dummy function to be used to create a better-auth client useful for generating the prisma schema
- */
-export function betterAuth(): {handler: (request: Request) => Promise<Response>, api: InferAPI}
-
 export declare class RedirectException extends HttpException {
     constructor(url: string, message: string, status: number);
 
@@ -239,13 +186,17 @@ export declare class PermanentRedirectException extends RedirectException {
 
 export declare class HttpExceptionDto {
     statusCode: number;
+
     message: string;
+
     error: string;
 }
 
 export declare class HttpExceptionSchema {
     statusCode: number;
+
     message: string;
+
     error: string;
 }
 
@@ -306,6 +257,7 @@ export declare class AuthorizationContext {
      * Returns a reference to the handler (method) that will be invoked next in the
      * request pipeline.
      */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     getHandler(): Function;
 
     /**
